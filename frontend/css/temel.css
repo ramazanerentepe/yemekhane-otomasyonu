@@ -10,6 +10,7 @@
     --notr-0: #FFFFFF;
     --notr-50: #F4F4F5;
     --notr-200: #E7E7E7;
+    --notr-300: #D6D6D6;
     --notr-400: #8A8A8A;
     --notr-600: #5F5F5F;
     --notr-800: #2A2A2A;
@@ -33,6 +34,7 @@
     --yuzey: var(--notr-0);
     --yuzey-gri: var(--notr-50);
     --cizgi: var(--notr-200);
+    --cizgi-koyu: var(--notr-300);
 
     --metin: var(--notr-900);
     --metin-soluk: var(--notr-600);
@@ -41,6 +43,8 @@
     --vurgu: var(--sari-500);
     --alerjen: var(--turuncu-800);
     --alerjen-zemin: var(--turuncu-50);
+    --vejetaryen: var(--yesil-800);
+    --vejetaryen-zemin: var(--yesil-50);
 
     --hata: var(--kirmizi-600);
     --hata-zemin: var(--kirmizi-50);
@@ -63,7 +67,7 @@
 
     --gecis: 0.18s ease;
 
-    --kapsayici-genislik: 1120px;
+    --kapsayici-genislik: 1440px;
     --ust-menu-yukseklik: 64px;
   }
 }
