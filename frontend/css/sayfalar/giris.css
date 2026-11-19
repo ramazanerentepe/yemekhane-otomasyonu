@@ -1,0 +1,93 @@
+@layer sayfa {
+  .giris {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    min-height: 100vh;
+  }
+
+  .giris__tanitim {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2.5rem clamp(1.5rem, 5vw, 4rem);
+    background: var(--ana);
+    color: var(--ana-uzerinde);
+  }
+
+  .giris__slogan { margin-top: auto; }
+  .giris__slogan h1 { font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.2; margin-bottom: 0.75rem; }
+  .giris__slogan p { margin: 0; opacity: 0.9; font-size: 1rem; }
+
+  .giris__ozellikler {
+    display: grid;
+    gap: 0.875rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .giris__ozellik {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: var(--boyut-kucuk);
+  }
+
+  .giris__ozellik-simge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--ana-koyu);
+  }
+
+  .giris__form-alani {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1.5rem;
+    background: var(--yuzey);
+  }
+
+  .giris__form { width: 100%; max-width: 380px; }
+  .giris__form h2 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  .giris__aciklama { color: var(--metin-soluk); margin-bottom: 1.75rem; }
+
+  .giris__form .dugme--koyu { margin-top: 0.5rem; height: 50px; font-size: 1rem; }
+
+  .sifre-goster .ikon--gizle { display: none; }
+  .sifre-goster[aria-pressed="true"] .ikon--goster { display: none; }
+  .sifre-goster[aria-pressed="true"] .ikon--gizle { display: block; }
+
+  @media (max-width: 720px) {
+    .giris {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+      background: var(--ana);
+    }
+
+    .giris__tanitim {
+      align-items: center;
+      gap: 0;
+      padding: 3rem 1.5rem 2.5rem;
+      text-align: center;
+    }
+
+    .giris__tanitim .logo { flex-direction: column; gap: 0.875rem; }
+    .giris__tanitim .logo__simge { width: 64px; height: 64px; border-radius: 18px; }
+    .giris__tanitim .logo__simge .ikon { width: 34px; height: 34px; }
+    .giris__tanitim .logo__ad { font-size: 1.375rem; }
+    .giris__tanitim .logo__alt { font-size: 0.875rem; margin-top: 0.25rem; }
+
+    .giris__slogan,
+    .giris__ozellikler { display: none; }
+
+    .giris__form-alani {
+      align-items: flex-start;
+      padding: 2rem 1.375rem;
+      border-radius: 26px 26px 0 0;
+    }
+  }
+}
