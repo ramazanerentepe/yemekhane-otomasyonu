@@ -7,7 +7,8 @@ const ortakAyarlar = {
   password: process.env.DB_SIFRE,
   database: process.env.DB_ADI,
   charset: 'utf8mb4',
-  dateStrings: true,            
+  dateStrings: true, 
+  decimalNumbers: true,            
   waitForConnections: true,
   connectionLimit: 10,
 };
