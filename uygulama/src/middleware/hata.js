@@ -14,6 +14,11 @@ function hataYakalayici(err, req, res, next) {
     return res.status(400).json({ hata: 'Geçersiz istek gövdesi.' });
   }
 
+  // Kullanıcıya gösterilecek hatalar (400, 401, 403...)
+  if (err.status) {
+    return res.status(err.status).json({ hata: err.message });
+  }
+
   // Geri kalan her şey sadece günlüğe
   console.error('[hata]', err);
   res.status(500).json({ hata: 'Beklenmeyen bir hata oluştu.' });
