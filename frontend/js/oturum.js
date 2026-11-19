@@ -9,6 +9,10 @@ const ROL_ADLARI = {
 
 export const rolAdi = (rol) => ROL_ADLARI[rol] ?? rol;
 
+export function bakiyeyiGoster(tutar) {
+  metinYaz('[data-bakiye]', paraBicimle(tutar));
+}
+
 export async function oturumuBaslat() {
   if (!token.al()) {
     window.location.replace('/');
@@ -23,7 +27,7 @@ export async function oturumuBaslat() {
 }
 
 function ustMenuyuDoldur(kullanici) {
-  metinYaz('[data-bakiye]', paraBicimle(kullanici.bakiye));
+  bakiyeyiGoster(kullanici.bakiye);
 
   document.querySelectorAll('[data-avatar]').forEach((eleman) => {
     eleman.textContent = basHarfler(kullanici.ad, kullanici.soyad);

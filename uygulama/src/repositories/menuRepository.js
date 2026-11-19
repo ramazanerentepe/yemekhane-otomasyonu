@@ -29,17 +29,22 @@ async function haftaAraligiGetir(tarih) {
   return aralik;
 }
 
-async function haftalikMenuleriGetir(yemekhaneId, ogunId, baslangic, bitis) {
+async function haftalikMenuleriGetir(kullaniciId, yemekhaneId, ogunId, baslangic, bitis) {
   const [satirlar] = await okumaHavuzu.query(
     `SELECT d.menu_id, d.tarih, m.ogrenci_fiyati, m.personel_fiyati,
             d.bos_yer, NOW() < d.rezervasyon_son AS rezervasyon_acik,
-            p.ortalama_puan, p.oy_sayisi
+            p.ortalama_puan, p.oy_sayisi,
+            r.id IS NOT NULL AS rezerve_edildi
        FROM v_menu_doluluk d
        JOIN menuler m     ON m.id = d.menu_id
        JOIN v_menu_puan p ON p.menu_id = d.menu_id
+       LEFT JOIN rezervasyonlar r
+              ON r.menu_id = d.menu_id
+             AND r.kullanici_id = ?
+             AND r.durum IN ('aktif', 'kullanildi')
       WHERE d.yemekhane_id = ? AND d.ogun_id = ? AND d.tarih BETWEEN ? AND ?
       ORDER BY d.tarih`,
-    [yemekhaneId, ogunId, baslangic, bitis]
+    [kullaniciId, yemekhaneId, ogunId, baslangic, bitis]
   );
   return satirlar;
 }

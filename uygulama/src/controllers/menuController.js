@@ -35,7 +35,7 @@ async function haftalikMenu(req, res) {
     throw istekHatasi(400, 'Geçersiz tarih.');
   }
 
-  res.json(await menuService.haftalikMenu(yemekhaneId, ogunId, tarih, req.oturum.rol));
+  res.json(await menuService.haftalikMenu(yemekhaneId, ogunId, tarih, req.oturum));
 }
 
 async function gununMenusu(req, res) {

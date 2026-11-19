@@ -1,11 +1,11 @@
 import { api } from '../api.js';
-import { oturumuBaslat } from '../oturum.js';
+import { bakiyeyiGoster, oturumuBaslat } from '../oturum.js';
 import { bildirimGizle, bildirimGoster, metinYaz, paraBicimle } from '../yardimcilar.js';
 
 const KARTTA_GOSTERILEN_YEMEK = 4;
 
 const secim = { yemekhane: null, ogun: null, tarih: null };
-const durum = { ogunler: [], hafta: null };
+const durum = { ogunler: [], hafta: null, istek: null, detay: null };
 let haftaIstegi = 0;
 let detayIstegi = 0;
 
@@ -119,8 +119,9 @@ function gunKarti(tarih, menu, istek) {
     etiket.append(eleman('span', 'rozet rozet--ana', 'Bugün'));
   } else if (iso < bugun) {
     kart.classList.add('gun-karti--gecmis');
-    etiket.textContent = 'Sona erdi';
+    etiket.append('Sona erdi');
   }
+  if (menu?.rezerve_edildi) etiket.prepend(eleman('span', 'rozet rozet--basari', 'Rezerve'));
 
   if (!menu) return kart;
 
@@ -139,6 +140,7 @@ function gunKarti(tarih, menu, istek) {
 
 function haftayiGoster(hafta, istek) {
   durum.hafta = hafta;
+  durum.istek = istek;
   const baslangic = tarihOku(hafta.baslangic);
   ogeler.haftaMetni.textContent = bicim.hafta.formatRange(baslangic, tarihOku(hafta.bitis));
 
@@ -189,10 +191,25 @@ function yorumKutusu(yorum) {
   return kutu;
 }
 
-function rezervasyonUyarisi(ozet) {
-  if (!ozet.rezervasyon_acik) return 'Bu menü için rezervasyon süresi doldu.';
-  if (ozet.bos_yer <= 0) return 'Yemekhane kapasitesi dolu.';
-  return '';
+function rezervasyonDurumu(ozet) {
+  if (ozet.rezerve_edildi) return { aktif: false, tur: 'basari', mesaj: 'Bu menü için rezervasyonunuz var.' };
+  if (!ozet.rezervasyon_acik) return { aktif: false, tur: 'hata', mesaj: 'Bu menü için rezervasyon süresi doldu.' };
+  if (ozet.bos_yer <= 0) return { aktif: false, tur: 'hata', mesaj: 'Yemekhane kapasitesi dolu.' };
+  return { aktif: true, tur: 'hata', mesaj: '' };
+}
+
+function uyariGoster(mesaj, tur) {
+  const uyari = document.querySelector('[data-detay-uyari]');
+  uyari.textContent = mesaj;
+  uyari.classList.toggle('detay__uyari--basari', tur === 'basari');
+}
+
+function rezervasyonAlaniniGoster(ozet) {
+  const { aktif, tur, mesaj } = rezervasyonDurumu(ozet);
+  ogeler.rezervasyon.disabled = !aktif;
+  ogeler.rezervasyon.textContent = ozet.rezerve_edildi ? 'Rezervasyonunuz var' : 'Rezervasyon yap';
+  metinYaz('[data-detay-bos-yer]', ozet.bos_yer);
+  uyariGoster(mesaj, tur);
 }
 
 function detayiDoldur(tarih, ozet, menu, yorumlar) {
@@ -205,14 +222,11 @@ function detayiDoldur(tarih, ozet, menu, yorumlar) {
   ogeler.detayVejetaryen.querySelector('span').textContent = menu.vejetaryen ? 'Vejetaryen' : 'Vejetaryen değil';
   metinYaz('[data-detay-servis]', `${menu.servis_baslangic}–${menu.servis_bitis}`);
   metinYaz('[data-detay-son]', menu.rezervasyon_son);
-  metinYaz('[data-detay-bos-yer]', ozet.bos_yer);
 
   metinYaz('[data-detay-fiyat]', paraBicimle(menu.fiyat));
   puaniYaz(ogeler.detayPuan, ozet, true);
 
-  const uyari = rezervasyonUyarisi(ozet);
-  ogeler.rezervasyon.disabled = uyari !== '';
-  metinYaz('[data-detay-uyari]', uyari);
+  rezervasyonAlaniniGoster(ozet);
 
   metinYaz('[data-yorum-sayisi]', yorumlar.length > 0 ? `(${yorumlar.length})` : '');
   if (yorumlar.length > 0) {
@@ -240,11 +254,34 @@ async function detayiAc(tarih, ozet, istek) {
     ]);
     if (istekNo !== detayIstegi) return;
 
+    durum.detay = ozet;
     detayiDoldur(tarih, ozet, menu, yorumlar);
     ogeler.detay.querySelector('.detay__govde').scrollTop = 0;
     if (!ogeler.detay.open) ogeler.detay.showModal();
   } catch (hata) {
     if (istekNo === detayIstegi) bildirimGoster(ogeler.bildirim, hata.message);
+  }
+}
+
+async function rezervasyonYap() {
+  const ozet = durum.detay;
+  if (!ozet) return;
+
+  ogeler.rezervasyon.disabled = true;
+  ogeler.rezervasyon.textContent = 'İşleniyor…';
+  uyariGoster('', 'hata');
+
+  try {
+    const sonuc = await api('/rezervasyonlar', { method: 'POST', govde: { menu_id: ozet.id } });
+    ozet.rezerve_edildi = true;
+    ozet.bos_yer -= 1;
+    bakiyeyiGoster(sonuc.bakiye);
+    rezervasyonAlaniniGoster(ozet);
+    uyariGoster(`${sonuc.mesaj} Yeni bakiye: ${paraBicimle(sonuc.bakiye)}`, 'basari');
+    haftayiGoster(durum.hafta, durum.istek);
+  } catch (hata) {
+    rezervasyonAlaniniGoster(ozet);
+    uyariGoster(hata.message, 'hata');
   }
 }
 
@@ -278,6 +315,7 @@ ogeler.ogunler.addEventListener('click', (olay) => {
 });
 
 document.querySelector('[data-detay-kapat]').addEventListener('click', detayiKapat);
+ogeler.rezervasyon.addEventListener('click', rezervasyonYap);
 
 ogeler.detay.addEventListener('click', (olay) => {
   if (olay.target !== ogeler.detay) return;
