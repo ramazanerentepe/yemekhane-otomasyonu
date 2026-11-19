@@ -130,7 +130,7 @@
   .gun-karti__gun { font-size: clamp(1.5rem, 2.4cqi, 2.375rem); font-weight: var(--kalinlik-orta); line-height: 1.1; }
   .gun-karti__gun-adi { color: var(--metin-soluk); font-size: clamp(0.8125rem, 1.1cqi, 1.0625rem); }
 
-  .gun-karti__etiket { grid-area: etiket; align-self: center; color: var(--metin-soluk); font-size: clamp(0.6875rem, 0.85cqi, 0.8125rem); }
+  .gun-karti__etiket { grid-area: etiket; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; align-self: center; color: var(--metin-soluk); font-size: clamp(0.6875rem, 0.85cqi, 0.8125rem); }
   .gun-karti__etiket .rozet { padding: 2px 8px; font-size: inherit; font-weight: var(--kalinlik-normal); }
 
   .gun-karti__yemekler {
@@ -267,6 +267,7 @@
 
   .detay__uyari { max-width: none; margin: 8px 0 0; color: var(--hata); font-size: var(--boyut-kucuk); }
   .detay__uyari:empty { display: none; }
+  .detay__uyari--basari { color: var(--basari); }
 
   .detay__alt-baslik { margin: 12px 0 6px; font-size: var(--boyut); }
   .detay__alt-baslik small { color: var(--metin-soluk); font-weight: var(--kalinlik-normal); }

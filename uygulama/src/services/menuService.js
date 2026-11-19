@@ -15,10 +15,10 @@ function yemegiDonustur(satir) {
   };
 }
 
-async function haftalikMenu(yemekhaneId, ogunId, tarih, rol) {
+async function haftalikMenu(yemekhaneId, ogunId, tarih, { kullaniciId, rol }) {
   const { bugun, baslangic, bitis } = await menuRepository.haftaAraligiGetir(tarih);
   const [menuler, yemekler] = await Promise.all([
-    menuRepository.haftalikMenuleriGetir(yemekhaneId, ogunId, baslangic, bitis),
+    menuRepository.haftalikMenuleriGetir(kullaniciId, yemekhaneId, ogunId, baslangic, bitis),
     menuRepository.haftalikYemekleriGetir(yemekhaneId, ogunId, baslangic, bitis),
   ]);
 
@@ -32,6 +32,7 @@ async function haftalikMenu(yemekhaneId, ogunId, tarih, rol) {
       fiyat: roleGoreFiyat(menu, rol),
       bos_yer: menu.bos_yer,
       rezervasyon_acik: menu.rezervasyon_acik === 1,
+      rezerve_edildi: menu.rezerve_edildi === 1,
       ortalama_puan: menu.ortalama_puan,
       oy_sayisi: menu.oy_sayisi,
       yemekler: yemekler.filter((y) => y.menu_id === menu.menu_id).map((y) => y.yemek),

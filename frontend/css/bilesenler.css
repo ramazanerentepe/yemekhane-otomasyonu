@@ -118,6 +118,7 @@
     font-weight: var(--kalinlik-orta);
   }
   .rozet--ana { background: var(--ana-acik); color: var(--ana-koyu); }
+  .rozet--basari { background: var(--basari-zemin); color: var(--basari); }
   .rozet--alerjen { background: var(--alerjen-zemin); color: var(--alerjen); }
 
   .cip {
