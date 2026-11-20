@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#E03131">
+  <title>Bakiye · Yemekhane</title>
+  <link rel="stylesheet" href="/css/temel.css">
+  <link rel="stylesheet" href="/css/genel.css">
+  <link rel="stylesheet" href="/css/bilesenler.css">
+  <link rel="stylesheet" href="/css/duzen.css">
+  <link rel="stylesheet" href="/css/sayfalar/bakiye.css">
+  <script type="module" src="/js/sayfalar/bakiye.js"></script>
+</head>
+<body>
+  <header class="ust-menu">
+    <div class="kapsayici ust-menu__ic">
+      <a class="logo" href="/menu.html">
+        <span class="logo__simge"><svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#yemek"></use></svg></span>
+        <span class="logo__metin">
+          <span class="logo__ad">Yemekhane</span>
+          <span class="logo__alt">Kampüs rezervasyon</span>
+        </span>
+      </a>
+
+      <nav class="ust-menu__gezinme" aria-label="Ana gezinme">
+        <a class="ust-menu__baglanti" href="/menu.html">Menü</a>
+        <a class="ust-menu__baglanti" href="/rezervasyonlarim.html">Rezervasyonlarım</a>
+        <a class="ust-menu__baglanti" href="/bakiye.html" aria-current="page">Bakiye</a>
+      </nav>
+
+      <div class="ust-menu__sag">
+        <span class="bakiye-etiketi">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cuzdan"></use></svg>
+          <span data-bakiye>—</span>
+        </span>
+        <span class="avatar" data-avatar aria-hidden="true"></span>
+        <button type="button" class="dugme dugme--simge" data-cikis aria-label="Çıkış yap">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cikis"></use></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="kapsayici sayfa">
+    <div class="sayfa-basligi">
+      <h1>Bakiye</h1>
+      <p>Güncel bakiyen, hareket geçmişin ve bakiye yükleme.</p>
+    </div>
+
+    <p id="sayfa-bildirim" class="bildirim" role="alert" hidden></p>
+
+    <div class="bakiye-duzeni">
+      <div class="bakiye-sol">
+        <section class="bakiye-karti" aria-labelledby="bakiye-baslik">
+          <span class="bakiye-karti__etiket" id="bakiye-baslik">
+            <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cuzdan"></use></svg>
+            Güncel bakiye
+          </span>
+          <strong class="bakiye-karti__tutar" data-bakiye-buyuk>—</strong>
+          <dl class="bakiye-karti__ozet">
+            <div><dt>Yüklenen</dt><dd data-ozet-yukleme>—</dd></div>
+            <div><dt>Harcanan</dt><dd data-ozet-harcama>—</dd></div>
+            <div><dt>İade</dt><dd data-ozet-iade>—</dd></div>
+          </dl>
+        </section>
+
+        <form class="kart yukleme-formu" data-yukleme-formu novalidate>
+          <h2>Bakiye yükle</h2>
+          <p class="yukleme-formu__aciklama">Tek seferde 10 ile 1000 TL arasında yükleyebilirsin.</p>
+
+          <div class="hizli-tutarlar" role="group" aria-label="Hızlı tutar seçimi">
+            <button type="button" class="hizli-tutar" data-hizli-tutar="50">50 TL</button>
+            <button type="button" class="hizli-tutar" data-hizli-tutar="100">100 TL</button>
+            <button type="button" class="hizli-tutar" data-hizli-tutar="200">200 TL</button>
+            <button type="button" class="hizli-tutar" data-hizli-tutar="500">500 TL</button>
+          </div>
+
+          <div class="alan">
+            <label for="tutar">Tutar</label>
+            <div class="alan__kutu">
+              <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cuzdan"></use></svg>
+              <input id="tutar" name="tutar" inputmode="decimal" autocomplete="off" placeholder="Ör. 150">
+              <span class="yukleme-formu__birim">TL</span>
+            </div>
+          </div>
+
+          <p class="bildirim" data-yukleme-bildirim role="status" hidden></p>
+
+          <button type="submit" class="dugme dugme--koyu dugme--tam" data-yukle>
+            <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#arti"></use></svg>
+            Bakiye yükle
+          </button>
+        </form>
+      </div>
+
+      <section class="kart hareketler" aria-labelledby="hareketler-baslik">
+        <div class="hareketler__baslik">
+          <h2 id="hareketler-baslik">Hareket geçmişi</h2>
+          <div class="segment hareket-filtre" role="group" aria-label="Hareket türü" data-filtreler>
+            <button type="button" class="segment__secenek" data-filtre="tumu">Tümü</button>
+            <button type="button" class="segment__secenek" data-filtre="yukleme">Yükleme</button>
+            <button type="button" class="segment__secenek" data-filtre="rezervasyon">Harcama</button>
+            <button type="button" class="segment__secenek" data-filtre="iade">İade</button>
+          </div>
+        </div>
+        <ul class="hareket-listesi" data-hareketler></ul>
+        <p class="hareketler__bos" data-bos hidden>Bu türde bir hareket yok.</p>
+      </section>
+    </div>
+  </main>
+
+  <template id="hareket-sablonu">
+    <li class="hareket">
+      <span class="hareket__simge"><svg class="ikon" aria-hidden="true"><use data-simge></use></svg></span>
+      <div class="hareket__bilgi">
+        <strong class="hareket__baslik" data-baslik></strong>
+        <span class="hareket__detay" data-detay></span>
+      </div>
+      <div class="hareket__sag">
+        <strong class="hareket__tutar" data-tutar></strong>
+        <span class="hareket__zaman" data-zaman></span>
+      </div>
+    </li>
+  </template>
+
+  <nav class="alt-menu" aria-label="Alt gezinme">
+    <a class="alt-menu__baglanti" href="/menu.html">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#yemek"></use></svg>Menü
+    </a>
+    <a class="alt-menu__baglanti" href="/rezervasyonlarim.html">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#bilet"></use></svg>Rezervasyon
+    </a>
+    <a class="alt-menu__baglanti" href="/bakiye.html" aria-current="page">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cuzdan"></use></svg>Bakiye
+    </a>
+    <button type="button" class="alt-menu__baglanti" data-cikis>
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cikis"></use></svg>Çıkış
+    </button>
+  </nav>
+</body>
+</html>
