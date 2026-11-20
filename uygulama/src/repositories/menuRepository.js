@@ -34,7 +34,7 @@ async function haftalikMenuleriGetir(kullaniciId, yemekhaneId, ogunId, baslangic
     `SELECT d.menu_id, d.tarih, m.ogrenci_fiyati, m.personel_fiyati,
             d.bos_yer, NOW() < d.rezervasyon_son AS rezervasyon_acik,
             p.ortalama_puan, p.oy_sayisi,
-            r.id IS NOT NULL AS rezerve_edildi
+            r.id AS rezervasyon_id
        FROM v_menu_doluluk d
        JOIN menuler m     ON m.id = d.menu_id
        JOIN v_menu_puan p ON p.menu_id = d.menu_id
