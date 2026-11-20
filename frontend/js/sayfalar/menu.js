@@ -1,13 +1,25 @@
 import { api } from '../api.js';
+import { menuDetayiOlustur } from '../menu-detay.js';
 import { bakiyeyiGoster, oturumuBaslat } from '../oturum.js';
-import { bildirimGizle, bildirimGoster, metinYaz, paraBicimle } from '../yardimcilar.js';
+import {
+  bildirimGizle,
+  bildirimGoster,
+  eleman,
+  gunEkle,
+  isoTarih,
+  paraBicimle,
+  puaniYaz,
+  simdikiSaat,
+  tarihOku,
+} from '../yardimcilar.js';
 
 const KARTTA_GOSTERILEN_YEMEK = 4;
 
 const secim = { yemekhane: null, ogun: null, tarih: null };
-const durum = { ogunler: [], hafta: null, istek: null, detay: null };
+const durum = { ogunler: [], hafta: null, istek: null };
 let haftaIstegi = 0;
-let detayIstegi = 0;
+
+const detay = menuDetayiOlustur();
 
 const ogeler = {
   bildirim: document.querySelector('#sayfa-bildirim'),
@@ -15,63 +27,15 @@ const ogeler = {
   yemekhane: document.querySelector('#yemekhane'),
   ogunler: document.querySelector('[data-ogunler]'),
   gunler: document.querySelector('[data-gunler]'),
-  detay: document.querySelector('[data-detay]'),
-  detayYemekler: document.querySelector('[data-detay-yemekler]'),
-  detayVejetaryen: document.querySelector('[data-detay-vejetaryen]'),
-  detayPuan: document.querySelector('[data-detay-puan]'),
-  detayYorumlar: document.querySelector('[data-detay-yorumlar]'),
-  rezervasyon: document.querySelector('[data-rezervasyon]'),
 };
 
 const bicim = {
   gun: new Intl.DateTimeFormat('tr-TR', { day: 'numeric' }),
   gunAdi: new Intl.DateTimeFormat('tr-TR', { weekday: 'short' }),
   hafta: new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
-  baslik: new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' }),
-  puan: new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-  sayi: new Intl.NumberFormat('tr-TR'),
 };
 
-const ikiHane = (sayi) => String(sayi).padStart(2, '0');
-
-const isoTarih = (tarih) =>
-  `${tarih.getFullYear()}-${ikiHane(tarih.getMonth() + 1)}-${ikiHane(tarih.getDate())}`;
-
-function tarihOku(metin) {
-  const [yil, ay, gun] = metin.split('-').map(Number);
-  return new Date(yil, ay - 1, gun);
-}
-
-function gunEkle(tarih, gun) {
-  return new Date(tarih.getFullYear(), tarih.getMonth(), tarih.getDate() + gun);
-}
-
 const sablondanKopyala = (id) => document.getElementById(id).content.firstElementChild.cloneNode(true);
-
-function eleman(etiket, sinif, metin) {
-  const yeni = document.createElement(etiket);
-  if (sinif) yeni.className = sinif;
-  if (metin !== undefined) yeni.textContent = metin;
-  return yeni;
-}
-
-function yildizlar(puan) {
-  const dolu = Math.round(puan);
-  const kutu = eleman('span', 'yildizlar', '★'.repeat(dolu));
-  kutu.setAttribute('role', 'img');
-  kutu.setAttribute('aria-label', `5 üzerinden ${bicim.puan.format(puan)} puan`);
-  kutu.append(eleman('span', 'yildizlar__bos', '★'.repeat(5 - dolu)));
-  return kutu;
-}
-
-function puaniYaz(hedef, menu, oySayisiGoster) {
-  if (menu.ortalama_puan === null) {
-    hedef.textContent = 'Henüz puan yok';
-    return;
-  }
-  hedef.replaceChildren(yildizlar(menu.ortalama_puan), ` ${bicim.puan.format(menu.ortalama_puan)}`);
-  if (oySayisiGoster) hedef.append(' ', eleman('small', '', `(${menu.oy_sayisi} oy)`));
-}
 
 function servisMetni(ogunId) {
   const ogun = durum.ogunler.find((o) => o.id === ogunId);
@@ -79,7 +43,7 @@ function servisMetni(ogunId) {
 }
 
 function varsayilanOgun(ogunler) {
-  const simdi = `${ikiHane(new Date().getHours())}:${ikiHane(new Date().getMinutes())}`;
+  const simdi = simdikiSaat();
   return (ogunler.find((ogun) => ogun.servis_bitis > simdi) ?? ogunler.at(-1)).id;
 }
 
@@ -89,7 +53,7 @@ function secenekleriDoldur(yemekhaneler, ogunler) {
 
   ogeler.ogunler.replaceChildren(
     ...ogunler.map((ogun) => {
-      const dugme = eleman('button', 'ogun-secici__secenek', ogun.ad);
+      const dugme = eleman('button', 'segment__secenek', ogun.ad);
       dugme.type = 'button';
       dugme.dataset.ogun = ogun.id;
       return dugme;
@@ -134,7 +98,7 @@ function gunKarti(tarih, menu, istek) {
   kart.querySelector('[data-fiyat]').textContent = paraBicimle(menu.fiyat);
   puaniYaz(kart.querySelector('[data-puan]'), menu, false);
 
-  kart.addEventListener('click', () => detayiAc(tarih, menu, istek));
+  kart.addEventListener('click', () => detayiAc(iso, menu, istek));
   return kart;
 }
 
@@ -169,125 +133,62 @@ async function haftayiYukle() {
   }
 }
 
-function detayYemekSatiri(yemek) {
-  const satir = sablondanKopyala('detay-yemek-sablonu');
-  satir.querySelector('[data-ad]').textContent = yemek.ad;
-  satir.querySelector('[data-kalori]').textContent = `${yemek.kalori} kcal`;
-  satir.querySelector('[data-etiketler]').append(
-    ...yemek.alerjenler.map((alerjen) => eleman('span', 'rozet rozet--alerjen', alerjen))
-  );
-  return satir;
-}
-
-function yorumKutusu(yorum) {
-  const kutu = sablondanKopyala('yorum-sablonu');
-  kutu.querySelector('[data-yildizlar]').append(yildizlar(yorum.puan));
-  kutu.querySelector('[data-kisi]').textContent = yorum.kullanici;
-
-  const metin = kutu.querySelector('[data-metin]');
-  if (yorum.yorum) metin.textContent = yorum.yorum;
-  else metin.remove();
-
-  return kutu;
-}
-
-function rezervasyonDurumu(ozet) {
-  if (ozet.rezerve_edildi) return { aktif: false, tur: 'basari', mesaj: 'Bu menü için rezervasyonunuz var.' };
-  if (!ozet.rezervasyon_acik) return { aktif: false, tur: 'hata', mesaj: 'Bu menü için rezervasyon süresi doldu.' };
-  if (ozet.bos_yer <= 0) return { aktif: false, tur: 'hata', mesaj: 'Yemekhane kapasitesi dolu.' };
-  return { aktif: true, tur: 'hata', mesaj: '' };
-}
-
-function uyariGoster(mesaj, tur) {
-  const uyari = document.querySelector('[data-detay-uyari]');
-  uyari.textContent = mesaj;
-  uyari.classList.toggle('detay__uyari--basari', tur === 'basari');
-}
-
-function rezervasyonAlaniniGoster(ozet) {
-  const { aktif, tur, mesaj } = rezervasyonDurumu(ozet);
-  ogeler.rezervasyon.disabled = !aktif;
-  ogeler.rezervasyon.textContent = ozet.rezerve_edildi ? 'Rezervasyonunuz var' : 'Rezervasyon yap';
-  metinYaz('[data-detay-bos-yer]', ozet.bos_yer);
-  uyariGoster(mesaj, tur);
-}
-
-function detayiDoldur(tarih, ozet, menu, yorumlar) {
-  metinYaz('[data-detay-tarih]', bicim.baslik.format(tarih));
-  metinYaz('[data-detay-alt]', `${menu.ogun} · ${menu.yemekhane}`);
-  ogeler.detayYemekler.replaceChildren(...menu.yemekler.map(detayYemekSatiri));
-
-  metinYaz('[data-detay-kalori]', `${bicim.sayi.format(menu.toplam_kalori)} kcal`);
-  ogeler.detayVejetaryen.classList.toggle('cip--vejetaryen', menu.vejetaryen);
-  ogeler.detayVejetaryen.querySelector('span').textContent = menu.vejetaryen ? 'Vejetaryen' : 'Vejetaryen değil';
-  metinYaz('[data-detay-servis]', `${menu.servis_baslangic}–${menu.servis_bitis}`);
-  metinYaz('[data-detay-son]', menu.rezervasyon_son);
-
-  metinYaz('[data-detay-fiyat]', paraBicimle(menu.fiyat));
-  puaniYaz(ogeler.detayPuan, ozet, true);
-
-  rezervasyonAlaniniGoster(ozet);
-
-  metinYaz('[data-yorum-sayisi]', yorumlar.length > 0 ? `(${yorumlar.length})` : '');
-  if (yorumlar.length > 0) {
-    ogeler.detayYorumlar.replaceChildren(...yorumlar.map(yorumKutusu));
-  } else {
-    const mesaj = isoTarih(tarih) < durum.hafta.bugun
-      ? 'Bu menü için henüz yorum yok.'
-      : 'Yorumlar menü servis edildikten sonra görünür.';
-    ogeler.detayYorumlar.replaceChildren(eleman('p', 'detay__yorumlar-bos', mesaj));
+function rezervasyonEylemi(menu) {
+  if (menu.rezerve_edildi) {
+    return menu.rezervasyon_acik
+      ? { dugme: { metin: 'İptal et', aktif: true }, mesaj: 'Bu menü için rezervasyonunuz var.', mesajTuru: 'basari' }
+      : { dugme: { metin: 'Rezervasyonunuz var', aktif: false }, mesaj: 'Bu menü için rezervasyonunuz var.', mesajTuru: 'basari' };
   }
+  if (!menu.rezervasyon_acik) {
+    return { dugme: { metin: 'Rezervasyon yap', aktif: false }, mesaj: 'Bu menü için rezervasyon süresi doldu.' };
+  }
+  if (menu.bos_yer <= 0) {
+    return { dugme: { metin: 'Rezervasyon yap', aktif: false }, mesaj: 'Yemekhane kapasitesi dolu.' };
+  }
+  return { dugme: { metin: 'Rezervasyon yap', aktif: true } };
 }
 
-async function detayiAc(tarih, ozet, istek) {
-  const istekNo = ++detayIstegi;
-  const sorgu = new URLSearchParams({
-    yemekhane: istek.yemekhane,
-    tarih: isoTarih(tarih),
-    ogun: istek.ogun,
-  });
-
+async function detayiAc(tarih, menu, istek) {
   try {
-    const [menu, yorumlar] = await Promise.all([
-      api(`/menu?${sorgu}`),
-      api(`/menuler/${ozet.id}/yorumlar`),
-    ]);
-    if (istekNo !== detayIstegi) return;
-
-    durum.detay = ozet;
-    detayiDoldur(tarih, ozet, menu, yorumlar);
-    ogeler.detay.querySelector('.detay__govde').scrollTop = 0;
-    if (!ogeler.detay.open) ogeler.detay.showModal();
+    await detay.ac({
+      tarih,
+      bugun: durum.hafta.bugun,
+      yemekhaneId: istek.yemekhane,
+      ogunId: istek.ogun,
+      menuId: menu.id,
+      puan: menu,
+      bosYer: menu.bos_yer,
+      eylem: rezervasyonEylemi(menu),
+      dugmeyeTiklaninca: () => (menu.rezerve_edildi ? iptaleYonlendir(menu) : rezervasyonYap(menu)),
+    });
   } catch (hata) {
-    if (istekNo === detayIstegi) bildirimGoster(ogeler.bildirim, hata.message);
+    bildirimGoster(ogeler.bildirim, hata.message);
   }
 }
 
-async function rezervasyonYap() {
-  const ozet = durum.detay;
-  if (!ozet) return;
+function iptaleYonlendir(menu) {
+  window.location.href = `/rezervasyonlarim.html?rezervasyon=${menu.rezervasyon_id}`;
+}
 
-  ogeler.rezervasyon.disabled = true;
-  ogeler.rezervasyon.textContent = 'İşleniyor…';
-  uyariGoster('', 'hata');
+async function rezervasyonYap(menu) {
+  detay.eylemiGoster({ dugme: { metin: 'İşleniyor…', aktif: false } });
 
   try {
-    const sonuc = await api('/rezervasyonlar', { method: 'POST', govde: { menu_id: ozet.id } });
-    ozet.rezerve_edildi = true;
-    ozet.bos_yer -= 1;
+    const sonuc = await api('/rezervasyonlar', { method: 'POST', govde: { menu_id: menu.id } });
+    menu.rezerve_edildi = true;
+    menu.rezervasyon_id = sonuc.rezervasyon_id;
+    menu.bos_yer -= 1;
     bakiyeyiGoster(sonuc.bakiye);
-    rezervasyonAlaniniGoster(ozet);
-    uyariGoster(`${sonuc.mesaj} Yeni bakiye: ${paraBicimle(sonuc.bakiye)}`, 'basari');
+    detay.bosYeriGoster(menu.bos_yer);
+    detay.eylemiGoster({
+      dugme: { metin: 'İptal et', aktif: true },
+      mesaj: `${sonuc.mesaj} Yeni bakiye: ${paraBicimle(sonuc.bakiye)}`,
+      mesajTuru: 'basari',
+    });
     haftayiGoster(durum.hafta, durum.istek);
   } catch (hata) {
-    rezervasyonAlaniniGoster(ozet);
-    uyariGoster(hata.message, 'hata');
+    detay.eylemiGoster({ ...rezervasyonEylemi(menu), mesaj: hata.message });
   }
-}
-
-function detayiKapat() {
-  detayIstegi += 1;
-  ogeler.detay.close();
 }
 
 document.querySelectorAll('[data-hafta]').forEach((dugme) => {
@@ -312,17 +213,6 @@ ogeler.ogunler.addEventListener('click', (olay) => {
   if (!dugme) return;
   secim.ogun = Number(dugme.dataset.ogun);
   haftayiYukle();
-});
-
-document.querySelector('[data-detay-kapat]').addEventListener('click', detayiKapat);
-ogeler.rezervasyon.addEventListener('click', rezervasyonYap);
-
-ogeler.detay.addEventListener('click', (olay) => {
-  if (olay.target !== ogeler.detay) return;
-  const kutu = ogeler.detay.getBoundingClientRect();
-  const disarida = olay.clientX < kutu.left || olay.clientX > kutu.right
-    || olay.clientY < kutu.top || olay.clientY > kutu.bottom;
-  if (disarida) detayiKapat();
 });
 
 try {

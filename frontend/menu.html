@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/css/genel.css">
   <link rel="stylesheet" href="/css/bilesenler.css">
   <link rel="stylesheet" href="/css/duzen.css">
+  <link rel="stylesheet" href="/css/menu-detay.css">
   <link rel="stylesheet" href="/css/sayfalar/menu.css">
   <script type="module" src="/js/sayfalar/menu.js"></script>
 </head>
@@ -25,7 +26,7 @@
 
       <nav class="ust-menu__gezinme" aria-label="Ana gezinme">
         <a class="ust-menu__baglanti" href="/menu.html" aria-current="page">Menü</a>
-        <a class="ust-menu__baglanti" href="/rezervasyonlarim.html" aria-disabled="true">Rezervasyonlarım</a>
+        <a class="ust-menu__baglanti" href="/rezervasyonlarim.html">Rezervasyonlarım</a>
         <a class="ust-menu__baglanti" href="/bakiye.html" aria-disabled="true">Bakiye</a>
       </nav>
 
@@ -68,7 +69,7 @@
           <span class="gorunmez">Yemekhane</span>
           <select id="yemekhane"></select>
         </label>
-        <div class="ogun-secici" role="group" aria-label="Öğün" data-ogunler></div>
+        <div class="segment ogun-secici" role="group" aria-label="Öğün" data-ogunler></div>
       </div>
     </div>
 
@@ -76,50 +77,6 @@
 
     <div class="gun-izgarasi" data-gunler></div>
   </main>
-
-  <dialog class="detay" data-detay aria-labelledby="detay-baslik">
-    <span class="detay__tutamac" aria-hidden="true"></span>
-    <header class="detay__baslik">
-      <div>
-        <h2 id="detay-baslik" data-detay-tarih></h2>
-        <p data-detay-alt></p>
-      </div>
-      <button type="button" class="detay__kapat" data-detay-kapat aria-label="Kapat">
-        <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#kapat"></use></svg>
-      </button>
-    </header>
-
-    <div class="detay__govde">
-      <ul class="detay__yemekler" data-detay-yemekler></ul>
-
-      <ul class="detay__bilgiler">
-        <li class="cip">
-          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#ates"></use></svg>
-          <span data-detay-kalori></span>
-        </li>
-        <li class="cip" data-detay-vejetaryen>
-          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#yaprak"></use></svg>
-          <span></span>
-        </li>
-        <li class="cip">
-          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#saat"></use></svg>
-          <span data-detay-servis></span>
-        </li>
-        <li class="cip">Son rez. <span data-detay-son></span></li>
-        <li class="cip">Boş yer <span data-detay-bos-yer></span></li>
-      </ul>
-
-      <div class="detay__eylem">
-        <strong class="detay__fiyat" data-detay-fiyat></strong>
-        <span class="detay__puan" data-detay-puan></span>
-        <button type="button" class="dugme detay__rezervasyon" data-rezervasyon>Rezervasyon yap</button>
-      </div>
-      <p class="detay__uyari" data-detay-uyari role="status"></p>
-
-      <h3 class="detay__alt-baslik">Yorumlar <small data-yorum-sayisi></small></h3>
-      <div class="detay__yorumlar" data-detay-yorumlar></div>
-    </div>
-  </dialog>
 
   <template id="gun-karti-sablonu">
     <button type="button" class="gun-karti">
@@ -152,29 +109,11 @@
     </div>
   </template>
 
-  <template id="detay-yemek-sablonu">
-    <li class="detay-yemek">
-      <span class="detay-yemek__ad" data-ad></span>
-      <span class="detay-yemek__etiketler" data-etiketler></span>
-      <span class="detay-yemek__kalori" data-kalori></span>
-    </li>
-  </template>
-
-  <template id="yorum-sablonu">
-    <div class="yorum">
-      <div class="yorum__ust">
-        <span data-yildizlar></span>
-        <span class="yorum__kisi" data-kisi></span>
-      </div>
-      <p class="yorum__metin" data-metin></p>
-    </div>
-  </template>
-
   <nav class="alt-menu" aria-label="Alt gezinme">
     <a class="alt-menu__baglanti" href="/menu.html" aria-current="page">
       <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#yemek"></use></svg>Menü
     </a>
-    <a class="alt-menu__baglanti" href="/rezervasyonlarim.html" aria-disabled="true">
+    <a class="alt-menu__baglanti" href="/rezervasyonlarim.html">
       <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#bilet"></use></svg>Rezervasyon
     </a>
     <a class="alt-menu__baglanti" href="/bakiye.html" aria-disabled="true">

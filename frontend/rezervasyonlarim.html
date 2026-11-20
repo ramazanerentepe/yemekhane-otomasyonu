@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#E03131">
+  <title>Rezervasyonlarım · Yemekhane</title>
+  <link rel="stylesheet" href="/css/temel.css">
+  <link rel="stylesheet" href="/css/genel.css">
+  <link rel="stylesheet" href="/css/bilesenler.css">
+  <link rel="stylesheet" href="/css/duzen.css">
+  <link rel="stylesheet" href="/css/menu-detay.css">
+  <link rel="stylesheet" href="/css/sayfalar/rezervasyonlarim.css">
+  <script type="module" src="/js/sayfalar/rezervasyonlarim.js"></script>
+</head>
+<body>
+  <header class="ust-menu">
+    <div class="kapsayici ust-menu__ic">
+      <a class="logo" href="/menu.html">
+        <span class="logo__simge"><svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#yemek"></use></svg></span>
+        <span class="logo__metin">
+          <span class="logo__ad">Yemekhane</span>
+          <span class="logo__alt">Kampüs rezervasyon</span>
+        </span>
+      </a>
+
+      <nav class="ust-menu__gezinme" aria-label="Ana gezinme">
+        <a class="ust-menu__baglanti" href="/menu.html">Menü</a>
+        <a class="ust-menu__baglanti" href="/rezervasyonlarim.html" aria-current="page">Rezervasyonlarım</a>
+        <a class="ust-menu__baglanti" href="/bakiye.html" aria-disabled="true">Bakiye</a>
+      </nav>
+
+      <div class="ust-menu__sag">
+        <span class="bakiye-etiketi">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cuzdan"></use></svg>
+          <span data-bakiye>—</span>
+        </span>
+        <span class="avatar" data-avatar aria-hidden="true"></span>
+        <button type="button" class="dugme dugme--simge" data-cikis aria-label="Çıkış yap">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cikis"></use></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="kapsayici sayfa">
+    <div class="rezervasyon-baslik">
+      <div class="sayfa-basligi">
+        <h1>Rezervasyonlarım</h1>
+        <p>Aktif, kullanılmış ve iptal edilmiş rezervasyonların.</p>
+      </div>
+
+      <div class="segment rezervasyon-filtre" role="group" aria-label="Duruma göre filtrele" data-filtreler>
+        <button type="button" class="segment__secenek" data-filtre="aktif">Aktif <span class="rezervasyon-filtre__sayi" data-sayi></span></button>
+        <button type="button" class="segment__secenek" data-filtre="kullanildi">Kullanıldı <span class="rezervasyon-filtre__sayi" data-sayi></span></button>
+        <button type="button" class="segment__secenek" data-filtre="iptal">İptal <span class="rezervasyon-filtre__sayi" data-sayi></span></button>
+        <button type="button" class="segment__secenek" data-filtre="tumu">Tümü <span class="rezervasyon-filtre__sayi" data-sayi></span></button>
+      </div>
+    </div>
+
+    <p id="sayfa-bildirim" class="bildirim" role="status" hidden></p>
+
+    <ul class="rezervasyon-listesi" data-liste></ul>
+
+    <div class="bos-liste" data-bos hidden>
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#bilet"></use></svg>
+      <p data-bos-mesaj></p>
+      <a class="dugme dugme--koyu" href="/menu.html">Menüye git</a>
+    </div>
+  </main>
+
+  <dialog class="onay" data-onay aria-labelledby="onay-baslik">
+    <h2 id="onay-baslik">Rezervasyon iptal edilsin mi?</h2>
+    <p class="onay__metin" data-onay-metin></p>
+    <div class="onay__eylemler">
+      <button type="button" class="dugme dugme--ikincil" data-onay-vazgec>Vazgeç</button>
+      <button type="button" class="dugme" data-onay-iptal>İptal et</button>
+    </div>
+  </dialog>
+
+  <template id="rezervasyon-sablonu">
+    <li class="rezervasyon">
+      <span class="rezervasyon__tarih">
+        <span class="rezervasyon__gun" data-gun></span>
+        <span class="rezervasyon__ay" data-ay></span>
+      </span>
+      <div class="rezervasyon__bilgi">
+        <div class="rezervasyon__ust">
+          <button type="button" class="rezervasyon__ac" data-ac>
+            <strong class="rezervasyon__baslik" data-baslik></strong>
+          </button>
+          <span data-durum></span>
+        </div>
+        <p class="rezervasyon__yemekler" data-yemekler></p>
+        <p class="rezervasyon__meta">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#saat"></use></svg>
+          <span data-meta></span>
+        </p>
+      </div>
+      <div class="rezervasyon__sag">
+        <strong class="rezervasyon__ucret" data-ucret></strong>
+        <span class="rezervasyon__not" data-not></span>
+        <button type="button" class="dugme dugme--ikincil rezervasyon__iptal" data-iptal hidden>İptal et</button>
+      </div>
+    </li>
+  </template>
+
+  <nav class="alt-menu" aria-label="Alt gezinme">
+    <a class="alt-menu__baglanti" href="/menu.html">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#yemek"></use></svg>Menü
+    </a>
+    <a class="alt-menu__baglanti" href="/rezervasyonlarim.html" aria-current="page">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#bilet"></use></svg>Rezervasyon
+    </a>
+    <a class="alt-menu__baglanti" href="/bakiye.html" aria-disabled="true">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cuzdan"></use></svg>Bakiye
+    </a>
+    <button type="button" class="alt-menu__baglanti" data-cikis>
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cikis"></use></svg>Çıkış
+    </button>
+  </nav>
+</body>
+</html>
