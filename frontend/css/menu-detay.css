@@ -95,6 +95,54 @@
   .detay__uyari--basari { color: var(--basari); }
   .detay__uyari--bilgi { color: var(--metin-soluk); }
 
+  .degerlendirme {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid var(--cizgi);
+    border-radius: var(--kose);
+  }
+
+  .degerlendirme__ozet {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .degerlendirme__mevcut { display: grid; gap: 2px; min-width: 0; }
+  .degerlendirme__baslik { font-size: var(--boyut); font-weight: var(--kalinlik-orta); }
+  .degerlendirme__mevcut .yildizlar { font-size: 1.0625rem; }
+  .degerlendirme__yorum { max-width: none; margin: 0; color: var(--metin-soluk); font-size: var(--boyut-kucuk); }
+  .degerlendirme__yorum:empty { display: none; }
+  .degerlendirme__ozet .dugme { min-height: 38px; padding: 0.5rem 1rem; font-size: var(--boyut-kucuk); }
+
+  .degerlendirme__form { display: grid; gap: 8px; }
+  .degerlendirme__etiket { margin: 0; font-size: var(--boyut-kucuk); font-weight: var(--kalinlik-orta); }
+  .degerlendirme__etiket small { color: var(--metin-silik); font-weight: var(--kalinlik-normal); }
+  .degerlendirme__form textarea { min-height: 84px; resize: vertical; }
+  .degerlendirme__form .bildirim { margin: 0; }
+
+  .yildiz-secici { display: flex; gap: 6px; }
+  .yildiz-secici__yildiz {
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--yuzey-gri);
+    color: var(--cizgi-koyu);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+  }
+  .yildiz-secici__yildiz:hover { transform: scale(1.08); }
+  .yildiz-secici__yildiz--dolu { background: var(--alerjen-zemin); color: var(--vurgu); }
+
+  .degerlendirme__alt { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .degerlendirme__sayac { color: var(--metin-silik); font-size: 0.75rem; }
+  .degerlendirme__eylemler { display: flex; gap: 8px; }
+  .degerlendirme__eylemler .dugme { min-height: 38px; padding: 0.5rem 1rem; font-size: var(--boyut-kucuk); }
+
   .detay__alt-baslik { margin: 12px 0 6px; font-size: var(--boyut); }
   .detay__alt-baslik small { color: var(--metin-soluk); font-weight: var(--kalinlik-normal); }
 
@@ -127,5 +175,7 @@
       background: var(--cizgi-koyu);
     }
     .detay__dugme { width: 100%; margin-left: 0; }
+    .degerlendirme__eylemler { flex: 1; }
+    .degerlendirme__eylemler .dugme { flex: 1; }
   }
 }

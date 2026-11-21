@@ -59,7 +59,14 @@ function kartGorunumu(rezervasyon) {
     case 'iptal':
       return { sinif: 'iptal', rozet: 'İptal edildi', rozetTuru: '', not: 'Ücret iade edildi' };
     case 'kullanildi':
-      return { sinif: 'gecmis', rozet: 'Kullanıldı', rozetTuru: 'basari', not: '' };
+      return {
+        sinif: 'gecmis',
+        rozet: 'Kullanıldı',
+        rozetTuru: 'basari',
+        not: rezervasyon.degerlendirme
+          ? `Puanın: ${'★'.repeat(rezervasyon.degerlendirme.puan)}${'☆'.repeat(5 - rezervasyon.degerlendirme.puan)}`
+          : 'Henüz değerlendirmedin',
+      };
     case 'gecmis':
       return { sinif: 'gecmis', rozet: 'Kullanılmadı', rozetTuru: '', not: 'Servis saati geçti' };
     default:
@@ -153,10 +160,25 @@ async function detayiAc(rezervasyon) {
       puan: rezervasyon,
       eylem: detayEylemi(rezervasyon),
       dugmeyeTiklaninca: () => onayiAc(rezervasyon),
+      degerlendirme: kategori(rezervasyon) === 'kullanildi'
+        ? { mevcut: rezervasyon.degerlendirme, kaydet: (veri) => degerlendirmeKaydet(rezervasyon, veri) }
+        : null,
     });
   } catch (hata) {
     bildirimGoster(ogeler.bildirim, hata.message);
   }
+}
+
+async function degerlendirmeKaydet(rezervasyon, { puan, yorum }) {
+  const sonuc = await api('/degerlendirmeler', {
+    method: 'POST',
+    govde: { menu_id: rezervasyon.menu_id, puan, yorum },
+  });
+  rezervasyon.degerlendirme = sonuc.degerlendirme;
+  rezervasyon.ortalama_puan = sonuc.ortalama_puan;
+  rezervasyon.oy_sayisi = sonuc.oy_sayisi;
+  listeyiGoster();
+  return sonuc;
 }
 
 function onayiAc(rezervasyon) {

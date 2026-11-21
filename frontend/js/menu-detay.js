@@ -1,8 +1,21 @@
 import { api } from './api.js';
-import { eleman, paraBicimle, puaniYaz, tarihOku, yildizlar } from './yardimcilar.js';
+import {
+  bildirimGizle,
+  bildirimGoster,
+  eleman,
+  paraBicimle,
+  puaniYaz,
+  tarihOku,
+  yildizlar,
+} from './yardimcilar.js';
 
 const baslikBicimi = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
 const sayiBicimi = new Intl.NumberFormat('tr-TR');
+const YORUM_SINIRI = 500;
+
+const YILDIZ_DUGMELERI = Array.from({ length: 5 }, (_, sira) =>
+  `<button type="button" class="yildiz-secici__yildiz" role="radio" aria-checked="false" aria-label="${sira + 1} yıldız" data-puan="${sira + 1}">★</button>`
+).join('');
 
 const ISKELET = `
   <dialog class="detay" aria-labelledby="detay-baslik">
@@ -44,6 +57,34 @@ const ISKELET = `
       </div>
       <p class="detay__uyari" data-detay-uyari role="status"></p>
 
+      <section class="degerlendirme" data-degerlendirme hidden>
+        <div class="degerlendirme__ozet" data-degerlendirme-ozet>
+          <div class="degerlendirme__mevcut">
+            <strong class="degerlendirme__baslik" data-degerlendirme-baslik></strong>
+            <span data-degerlendirme-yildiz></span>
+            <p class="degerlendirme__yorum" data-degerlendirme-yorum></p>
+          </div>
+          <button type="button" class="dugme dugme--ikincil" data-degerlendirme-ac></button>
+        </div>
+
+        <form class="degerlendirme__form" data-degerlendirme-form hidden novalidate>
+          <span class="degerlendirme__etiket" id="degerlendirme-puan-etiketi">Puanın</span>
+          <div class="yildiz-secici" role="radiogroup" aria-labelledby="degerlendirme-puan-etiketi" data-yildiz-secici>
+            ${YILDIZ_DUGMELERI}
+          </div>
+          <label class="degerlendirme__etiket" for="degerlendirme-yorum">Yorumun <small>(isteğe bağlı)</small></label>
+          <textarea id="degerlendirme-yorum" maxlength="${YORUM_SINIRI}" rows="3" placeholder="Yemek nasıldı?"></textarea>
+          <div class="degerlendirme__alt">
+            <span class="degerlendirme__sayac" data-yorum-sayac></span>
+            <div class="degerlendirme__eylemler">
+              <button type="button" class="dugme dugme--ikincil" data-degerlendirme-vazgec>Vazgeç</button>
+              <button type="submit" class="dugme" data-degerlendirme-gonder>Gönder</button>
+            </div>
+          </div>
+          <p class="bildirim" data-degerlendirme-bildirim role="alert" hidden></p>
+        </form>
+      </section>
+
       <h3 class="detay__alt-baslik">Yorumlar <small data-detay-yorum-sayisi></small></h3>
       <div class="detay__yorumlar" data-detay-yorumlar></div>
     </div>
@@ -79,6 +120,20 @@ export function menuDetayiOlustur() {
 
   let istekNo = 0;
   let dugmeyeTiklaninca = null;
+  let degerlendirme = null;
+  let seciliPuan = 0;
+
+  const dgr = {
+    alan: bul('[data-degerlendirme]'),
+    ozet: bul('[data-degerlendirme-ozet]'),
+    acDugmesi: bul('[data-degerlendirme-ac]'),
+    form: bul('[data-degerlendirme-form]'),
+    yildizlar: [...pencere.querySelectorAll('[data-puan]')],
+    yorum: bul('#degerlendirme-yorum'),
+    sayac: bul('[data-yorum-sayac]'),
+    gonder: bul('[data-degerlendirme-gonder]'),
+    bildirim: bul('[data-degerlendirme-bildirim]'),
+  };
 
   function eylemiGoster({ dugme: ayar = null, mesaj = '', mesajTuru = 'hata' } = {}) {
     dugme.hidden = !ayar;
@@ -110,6 +165,69 @@ export function menuDetayiOlustur() {
     alan.replaceChildren(eleman('p', 'detay__yorumlar-bos', mesaj));
   }
 
+  function yildizlariBoya(puan) {
+    dgr.yildizlar.forEach((yildiz) => {
+      const deger = Number(yildiz.dataset.puan);
+      yildiz.classList.toggle('yildiz-secici__yildiz--dolu', deger <= puan);
+      yildiz.setAttribute('aria-checked', String(deger === seciliPuan));
+    });
+  }
+
+  function sayaciGoster() {
+    dgr.sayac.textContent = `${dgr.yorum.value.length} / ${YORUM_SINIRI}`;
+  }
+
+  function degerlendirmeOzetiGoster() {
+    const { mevcut } = degerlendirme;
+    dgr.form.hidden = true;
+    dgr.ozet.hidden = false;
+    bul('[data-degerlendirme-yildiz]').replaceChildren(...(mevcut ? [yildizlar(mevcut.puan)] : []));
+    yaz('[data-degerlendirme-baslik]', mevcut ? 'Değerlendirmen' : 'Bu menüyü henüz değerlendirmedin.');
+    yaz('[data-degerlendirme-yorum]', mevcut?.yorum ?? '');
+    dgr.acDugmesi.textContent = mevcut ? 'Düzenle' : 'Değerlendir';
+  }
+
+  function degerlendirmeFormunuAc() {
+    const { mevcut } = degerlendirme;
+    seciliPuan = mevcut?.puan ?? 0;
+    dgr.yorum.value = mevcut?.yorum ?? '';
+    dgr.gonder.textContent = mevcut ? 'Güncelle' : 'Gönder';
+    bildirimGizle(dgr.bildirim);
+    yildizlariBoya(seciliPuan);
+    sayaciGoster();
+    dgr.ozet.hidden = true;
+    dgr.form.hidden = false;
+    dgr.yildizlar[Math.max(seciliPuan - 1, 0)].focus();
+  }
+
+  async function degerlendirmeyiGonder(olay) {
+    olay.preventDefault();
+    if (!seciliPuan) {
+      bildirimGoster(dgr.bildirim, 'Lütfen 1 ile 5 arasında bir puan seç.');
+      return;
+    }
+
+    dgr.gonder.disabled = true;
+    try {
+      const sonuc = await degerlendirme.kaydet({ puan: seciliPuan, yorum: dgr.yorum.value.trim() });
+      degerlendirme.mevcut = sonuc.degerlendirme;
+      puaniYaz(bul('[data-detay-puan]'), sonuc, true);
+      yorumlariGoster(sonuc.yorumlar, true);
+      degerlendirmeOzetiGoster();
+      eylemiGoster({ mesaj: sonuc.mesaj, mesajTuru: 'basari' });
+    } catch (hata) {
+      bildirimGoster(dgr.bildirim, hata.message);
+    } finally {
+      dgr.gonder.disabled = false;
+    }
+  }
+
+  function degerlendirmeAlaniniKur(ayar) {
+    degerlendirme = ayar ?? null;
+    dgr.alan.hidden = !degerlendirme;
+    if (degerlendirme) degerlendirmeOzetiGoster();
+  }
+
   function doldur(secenekler, menu, yorumlar) {
     yaz('[data-detay-tarih]', baslikBicimi.format(tarihOku(secenekler.tarih)));
     yaz('[data-detay-alt]', `${menu.ogun} · ${menu.yemekhane}`);
@@ -127,6 +245,7 @@ export function menuDetayiOlustur() {
     puaniYaz(bul('[data-detay-puan]'), secenekler.puan, true);
     eylemiGoster(secenekler.eylem);
     yorumlariGoster(yorumlar, secenekler.tarih < secenekler.bugun);
+    degerlendirmeAlaniniKur(secenekler.degerlendirme);
   }
 
   async function ac(secenekler) {
@@ -153,6 +272,21 @@ export function menuDetayiOlustur() {
     istekNo += 1;
     pencere.close();
   }
+
+  dgr.acDugmesi.addEventListener('click', degerlendirmeFormunuAc);
+  bul('[data-degerlendirme-vazgec]').addEventListener('click', degerlendirmeOzetiGoster);
+  dgr.form.addEventListener('submit', degerlendirmeyiGonder);
+  dgr.yorum.addEventListener('input', sayaciGoster);
+  dgr.yildizlar.forEach((yildiz) => {
+    const deger = Number(yildiz.dataset.puan);
+    yildiz.addEventListener('click', () => {
+      seciliPuan = deger;
+      yildizlariBoya(seciliPuan);
+      bildirimGizle(dgr.bildirim);
+    });
+    yildiz.addEventListener('mouseenter', () => yildizlariBoya(deger));
+  });
+  bul('[data-yildiz-secici]').addEventListener('mouseleave', () => yildizlariBoya(seciliPuan));
 
   bul('[data-detay-kapat]').addEventListener('click', kapat);
   dugme.addEventListener('click', () => dugmeyeTiklaninca?.());

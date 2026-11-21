@@ -1,4 +1,4 @@
-const { okumaHavuzu } = require('../config/db');
+const { okumaHavuzu, yazmaHavuzu } = require('../config/db');
 
 async function yemekhaneleriGetir() {
   const [satirlar] = await okumaHavuzu.query(
@@ -34,7 +34,8 @@ async function haftalikMenuleriGetir(kullaniciId, yemekhaneId, ogunId, baslangic
     `SELECT d.menu_id, d.tarih, m.ogrenci_fiyati, m.personel_fiyati,
             d.bos_yer, NOW() < d.rezervasyon_son AS rezervasyon_acik,
             p.ortalama_puan, p.oy_sayisi,
-            r.id AS rezervasyon_id
+            r.id AS rezervasyon_id, r.durum AS rezervasyon_durumu,
+            dg.puan AS benim_puanim, dg.yorum AS benim_yorumum
        FROM v_menu_doluluk d
        JOIN menuler m     ON m.id = d.menu_id
        JOIN v_menu_puan p ON p.menu_id = d.menu_id
@@ -42,6 +43,9 @@ async function haftalikMenuleriGetir(kullaniciId, yemekhaneId, ogunId, baslangic
               ON r.menu_id = d.menu_id
              AND r.kullanici_id = ?
              AND r.durum IN ('aktif', 'kullanildi')
+       LEFT JOIN degerlendirmeler dg
+              ON dg.menu_id = d.menu_id
+             AND dg.kullanici_id = r.kullanici_id
       WHERE d.yemekhane_id = ? AND d.ogun_id = ? AND d.tarih BETWEEN ? AND ?
       ORDER BY d.tarih`,
     [kullaniciId, yemekhaneId, ogunId, baslangic, bitis]
@@ -77,8 +81,8 @@ async function gununMenusunuGetir(yemekhaneId, tarih, ogunId) {
   return satirlar;
 }
 
-async function yorumlariGetir(menuId) {
-  const [satirlar] = await okumaHavuzu.query(
+async function yorumlariGetir(menuId, havuz = okumaHavuzu) {
+  const [satirlar] = await havuz.query(
     `SELECT d.id, d.puan, d.yorum,
             CONCAT(k.ad, ' ', LEFT(k.soyad, 1), '.') AS kullanici
        FROM degerlendirmeler d
@@ -90,6 +94,8 @@ async function yorumlariGetir(menuId) {
   return satirlar;
 }
 
+const yorumlariKaynaktanGetir = (menuId) => yorumlariGetir(menuId, yazmaHavuzu);
+
 module.exports = {
   yemekhaneleriGetir,
   ogunleriGetir,
@@ -98,4 +104,5 @@ module.exports = {
   haftalikYemekleriGetir,
   gununMenusunuGetir,
   yorumlariGetir,
+  yorumlariKaynaktanGetir,
 };
