@@ -22,4 +22,5 @@
   <symbol id="bina" viewBox="0 0 24 24"><path d="M4 21V9l8-5 8 5v12"/><path d="M3 21h18M9 21v-6h6v6"/></symbol>
   <symbol id="arti" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
   <symbol id="geri" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+  <symbol id="panel" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7 16v-5m5 5V5m5 11V9"/></symbol>
 </svg>

@@ -241,7 +241,7 @@ export function menuDetayiOlustur() {
     yaz('[data-detay-son]', menu.rezervasyon_son);
     bosYeriGoster(secenekler.bosYer);
 
-    yaz('[data-detay-fiyat]', paraBicimle(secenekler.fiyat ?? menu.fiyat));
+    yaz('[data-detay-fiyat]', secenekler.fiyatMetni ?? paraBicimle(secenekler.fiyat ?? menu.fiyat));
     puaniYaz(bul('[data-detay-puan]'), secenekler.puan, true);
     eylemiGoster(secenekler.eylem);
     yorumlariGoster(yorumlar, secenekler.tarih < secenekler.bugun);

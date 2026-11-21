@@ -1,19 +1,7 @@
 const menuService = require('../services/menuService');
 const menuRepository = require('../repositories/menuRepository');
 const istekHatasi = require('../utils/istekHatasi');
-
-const TARIH_BICIMI = /^\d{4}-\d{2}-\d{2}$/;
-
-function pozitifTamSayi(deger) {
-  const sayi = Number(deger);
-  return Number.isInteger(sayi) && sayi > 0 ? sayi : null;
-}
-
-function gecerliTarih(deger) {
-  if (!TARIH_BICIMI.test(deger)) return false;
-  const tarih = new Date(`${deger}T00:00:00Z`);
-  return !Number.isNaN(tarih.getTime()) && tarih.toISOString().startsWith(deger);
-}
+const { pozitifTamSayi, gecerliTarih } = require('../utils/dogrulama');
 
 async function yemekhaneler(req, res) {
   res.json(await menuRepository.yemekhaneleriGetir());

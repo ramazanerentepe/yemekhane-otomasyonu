@@ -14,4 +14,11 @@ async function oturumGerekli(req, res, next) {
   next();
 }
 
-module.exports = { oturumGerekli };
+function yoneticiGerekli(req, res, next) {
+  if (req.oturum?.rol !== 'yonetici') {
+    throw istekHatasi(403, 'Bu işlem yalnızca yöneticiler içindir.');
+  }
+  next();
+}
+
+module.exports = { oturumGerekli, yoneticiGerekli };
