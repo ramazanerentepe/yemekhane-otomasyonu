@@ -118,7 +118,7 @@
 
   .degerlendirme__form { display: grid; gap: 8px; }
   .degerlendirme__etiket { margin: 0; font-size: var(--boyut-kucuk); font-weight: var(--kalinlik-orta); }
-  .degerlendirme__etiket small { color: var(--metin-silik); font-weight: var(--kalinlik-normal); }
+  .degerlendirme__etiket small { color: var(--metin-silik); font-size: 0.75rem; font-weight: var(--kalinlik-normal); }
   .degerlendirme__form textarea { min-height: 84px; resize: vertical; }
   .degerlendirme__form .bildirim { margin: 0; }
 

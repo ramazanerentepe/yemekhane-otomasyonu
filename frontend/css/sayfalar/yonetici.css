@@ -220,7 +220,7 @@
     font-size: var(--boyut-kucuk);
     font-weight: var(--kalinlik-orta);
   }
-  .menu-formu__etiket small { color: var(--metin-soluk); font-weight: var(--kalinlik-normal); }
+  .menu-formu__etiket small { color: var(--metin-soluk); font-size: 0.75rem; font-weight: var(--kalinlik-normal); }
 
   .yemek-secimi { display: grid; gap: 10px; }
 
@@ -343,6 +343,7 @@
     }
     .yemek-grubu { grid-template-columns: minmax(0, 1fr); gap: 4px; }
     .yemek-grubu__ad { padding-top: 0; }
+    .yemek-cipi { min-height: 36px; }
     .menu-formu__ozet { flex-basis: 100%; }
     .menu-formu__alt .dugme { flex: 1; }
     .menu-formu__alt .menu-formu__eski { flex-basis: 100%; margin-right: 0; }

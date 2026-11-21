@@ -116,6 +116,15 @@
   }
   .hareket__detay:empty { display: none; }
 
+  @media (max-width: 720px) {
+    .hareket__detay {
+      display: -webkit-box;
+      white-space: normal;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+  }
+
   .hareket__sag { display: grid; gap: 2px; text-align: right; }
   .hareket__tutar { font-weight: var(--kalinlik-orta); white-space: nowrap; }
   .hareket__tutar--arti { color: var(--basari); }

@@ -84,7 +84,12 @@
 
   .alan__eylem {
     display: inline-flex;
-    padding: 0.25rem;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-right: -0.5rem;
+    padding: 0;
     border: 0;
     border-radius: 8px;
     background: transparent;
@@ -244,6 +249,7 @@
   @keyframes onay-ac { from { opacity: 0; transform: scale(0.94); } }
 
   @media (max-width: 720px) {
-    .onay__eylemler .dugme { flex: 1; }
+    .onay__eylemler { flex-wrap: wrap; }
+    .onay__eylemler .dugme { flex: 1 1 auto; padding-inline: 1rem; white-space: nowrap; }
   }
 }
