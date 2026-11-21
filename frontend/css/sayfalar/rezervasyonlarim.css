@@ -127,23 +127,6 @@
   .bos-liste .ikon { width: 40px; height: 40px; color: var(--metin-silik); }
   .bos-liste p { margin: 0; }
 
-  .onay {
-    width: calc(100% - 32px);
-    max-width: 420px;
-    padding: 1.5rem;
-    border: 0;
-    border-radius: 18px;
-    background: var(--yuzey);
-    color: var(--metin);
-  }
-  .onay[open] { animation: onay-ac 0.2s ease; }
-  .onay::backdrop { background: rgb(15 15 15 / 0.35); }
-  .onay h2 { margin-bottom: 0.5rem; font-size: 1.125rem; }
-  .onay__metin { color: var(--metin-soluk); }
-  .onay__eylemler { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.25rem; }
-
-  @keyframes onay-ac { from { opacity: 0; transform: scale(0.94); } }
-
   @media (max-width: 720px) {
     .rezervasyon-baslik { flex-direction: column; align-items: stretch; }
     .rezervasyon-filtre { display: grid; grid-template-columns: repeat(4, 1fr); }
@@ -162,6 +145,5 @@
     .rezervasyon__sag { grid-area: sag; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
     .rezervasyon__not { text-align: left; }
 
-    .onay__eylemler .dugme { flex: 1; }
   }
 }

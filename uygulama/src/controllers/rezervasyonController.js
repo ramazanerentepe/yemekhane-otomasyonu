@@ -1,10 +1,6 @@
 const rezervasyonService = require('../services/rezervasyonService');
 const istekHatasi = require('../utils/istekHatasi');
-
-function pozitifTamSayi(deger) {
-  const sayi = Number(deger);
-  return Number.isInteger(sayi) && sayi > 0 ? sayi : null;
-}
+const { pozitifTamSayi } = require('../utils/dogrulama');
 
 async function listele(req, res) {
   res.json(await rezervasyonService.rezervasyonlarim(req.oturum.kullaniciId));

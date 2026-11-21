@@ -33,6 +33,10 @@ function ustMenuyuDoldur(kullanici) {
     eleman.textContent = basHarfler(kullanici.ad, kullanici.soyad);
     eleman.title = `${kullanici.ad} ${kullanici.soyad}`;
   });
+
+  document.querySelectorAll('[data-yonetici]').forEach((baglanti) => {
+    baglanti.hidden = kullanici.rol !== 'yonetici';
+  });
 }
 
 function cikisDugmeleriniBagla() {

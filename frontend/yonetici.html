@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#E03131">
+  <title>Yönetici paneli · Yemekhane</title>
+  <link rel="stylesheet" href="/css/temel.css">
+  <link rel="stylesheet" href="/css/genel.css">
+  <link rel="stylesheet" href="/css/bilesenler.css">
+  <link rel="stylesheet" href="/css/duzen.css">
+  <link rel="stylesheet" href="/css/menu-detay.css">
+  <link rel="stylesheet" href="/css/sayfalar/yonetici.css">
+  <script type="module" src="/js/sayfalar/yonetici.js"></script>
+</head>
+<body>
+  <header class="ust-menu">
+    <div class="kapsayici ust-menu__ic">
+      <a class="logo" href="/menu.html">
+        <span class="logo__simge"><svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#yemek"></use></svg></span>
+        <span class="logo__metin">
+          <span class="logo__ad">Yemekhane</span>
+          <span class="logo__alt">Kampüs rezervasyon</span>
+        </span>
+      </a>
+
+      <nav class="ust-menu__gezinme" aria-label="Ana gezinme">
+        <a class="ust-menu__baglanti" href="/menu.html">Menü</a>
+        <a class="ust-menu__baglanti" href="/rezervasyonlarim.html">Rezervasyonlarım</a>
+        <a class="ust-menu__baglanti" href="/bakiye.html">Bakiye</a>
+        <a class="ust-menu__baglanti" href="/yonetici.html" aria-current="page" data-yonetici>Yönetici</a>
+      </nav>
+
+      <div class="ust-menu__sag">
+        <span class="bakiye-etiketi">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cuzdan"></use></svg>
+          <span data-bakiye>—</span>
+        </span>
+        <span class="avatar" data-avatar aria-hidden="true"></span>
+        <button type="button" class="dugme dugme--simge" data-cikis aria-label="Çıkış yap">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cikis"></use></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="kapsayici sayfa">
+    <div class="yonetici-baslik">
+      <div class="sayfa-basligi">
+        <h1>Yönetici paneli</h1>
+        <p>Menü oluştur, düzenle; doluluk ve puanları izle.</p>
+      </div>
+      <button type="button" class="dugme" data-yeni-menu>
+        <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#arti"></use></svg>
+        Yeni menü
+      </button>
+    </div>
+
+    <p id="sayfa-bildirim" class="bildirim bildirim-hata" role="alert" hidden></p>
+
+    <dl class="ozet-kartlari" aria-label="Haftalık özet">
+      <div class="ozet-karti ozet-karti--ana"><dt>Bu haftaki menü</dt><dd data-ozet="menu_sayisi">—</dd></div>
+      <div class="ozet-karti"><dt>Ortalama doluluk</dt><dd data-ozet="ortalama_doluluk">—</dd></div>
+      <div class="ozet-karti"><dt>Rezervasyon</dt><dd data-ozet="rezervasyon">—</dd></div>
+      <div class="ozet-karti"><dt>Ortalama puan</dt><dd data-ozet="ortalama_puan">—</dd></div>
+    </dl>
+
+    <div class="yonetici-duzeni">
+      <section class="rapor-bolumu" aria-labelledby="rapor-baslik">
+        <h2 id="rapor-baslik" class="gorunmez">Menü raporu</h2>
+        <div class="rapor-arac">
+          <label class="secim-kutusu">
+            <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#bina"></use></svg>
+            <span class="gorunmez">Yemekhane</span>
+            <select id="rapor-yemekhane"></select>
+          </label>
+          <div class="segment" role="group" aria-label="Öğün" data-rapor-ogunler></div>
+          <div class="rapor-hafta">
+            <button type="button" class="dugme dugme--ikincil dugme--simge" data-hafta="-1" aria-label="Önceki hafta">
+              <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#ok-sol"></use></svg>
+            </button>
+            <strong data-hafta-metni></strong>
+            <button type="button" class="dugme dugme--ikincil dugme--simge" data-hafta="1" aria-label="Sonraki hafta">
+              <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#ok-sag"></use></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="rapor">
+          <div class="rapor__baslik" aria-hidden="true">
+            <span>Tarih</span><span>Yemekler</span><span>Doluluk</span><span>Puan</span><span></span>
+          </div>
+          <ul class="rapor__liste" data-rapor></ul>
+        </div>
+      </section>
+
+      <form class="kart menu-formu" data-menu-formu novalidate aria-labelledby="form-baslik">
+        <div class="menu-formu__baslik">
+          <h2 id="form-baslik" data-form-baslik>Yeni menü</h2>
+          <span class="rozet rozet--ana" data-form-rozet hidden></span>
+        </div>
+
+        <div class="menu-formu__govde" data-form-govde>
+          <div class="menu-formu__izgara">
+            <div class="alan">
+              <label for="form-tarih">Tarih</label>
+              <input id="form-tarih" type="date" required>
+            </div>
+            <div class="alan">
+              <label for="form-yemekhane">Yemekhane</label>
+              <select id="form-yemekhane"></select>
+            </div>
+            <div class="alan">
+              <label for="form-ogrenci">Öğrenci fiyatı (TL)</label>
+              <input id="form-ogrenci" inputmode="decimal" autocomplete="off" placeholder="Ör. 40">
+            </div>
+            <div class="alan">
+              <label for="form-personel">Personel fiyatı (TL)</label>
+              <input id="form-personel" inputmode="decimal" autocomplete="off" placeholder="Ör. 90">
+            </div>
+          </div>
+
+          <div class="alan">
+            <span class="menu-formu__etiket" id="form-ogun-etiket">Öğün</span>
+            <div class="segment menu-formu__ogunler" role="group" aria-labelledby="form-ogun-etiket" data-form-ogunler></div>
+          </div>
+
+          <div class="alan">
+            <span class="menu-formu__etiket">Yemekler <small>(eklemek ya da çıkarmak için tıkla)</small></span>
+            <ul class="renk-aciklamasi" data-renk-aciklamasi hidden>
+              <li><span class="renk-aciklamasi__kutu"></span>Menüde</li>
+              <li><span class="renk-aciklamasi__kutu renk-aciklamasi__kutu--eklenen"></span>Yeni eklenen</li>
+              <li><span class="renk-aciklamasi__kutu renk-aciklamasi__kutu--cikarilan"></span>Çıkarılan</li>
+            </ul>
+            <div class="yemek-secimi" data-yemek-secimi></div>
+          </div>
+        </div>
+
+        <div class="menu-formu__dip">
+          <p class="menu-formu__uyari" data-form-uyari hidden>
+            <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#uyari"></use></svg>
+            <span></span>
+          </p>
+          <p class="bildirim" data-form-bildirim role="status" hidden></p>
+
+          <div class="menu-formu__alt">
+            <span class="menu-formu__ozet" data-form-ozet>Yemek seçilmedi</span>
+            <button type="button" class="dugme dugme--ikincil menu-formu__eski" data-eski-hal disabled>
+              <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#geri"></use></svg>
+              Eski haline getir
+            </button>
+            <button type="button" class="dugme dugme--ikincil" data-vazgec>Vazgeç</button>
+            <button type="submit" class="dugme dugme--koyu" data-kaydet>Kaydet</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <dialog class="onay" data-onay aria-labelledby="onay-baslik">
+    <h2 id="onay-baslik">Kaydedilmemiş değişiklikler var</h2>
+    <p class="onay__metin" data-onay-metin></p>
+    <div class="onay__eylemler">
+      <button type="button" class="dugme dugme--ikincil" data-onay-vazgec>Forma dön</button>
+      <button type="button" class="dugme" data-onay-at>Değişiklikleri at</button>
+    </div>
+  </dialog>
+
+  <template id="rapor-satiri-sablonu">
+    <li class="rapor-satiri">
+      <span class="rapor-satiri__tarih">
+        <strong data-gun></strong>
+        <small data-gun-adi></small>
+      </span>
+      <span class="rapor-satiri__yemekler" data-yemekler></span>
+      <span class="rapor-satiri__doluluk" data-doluluk></span>
+      <span class="rapor-satiri__puan" data-puan></span>
+      <span class="rapor-satiri__eylem" data-eylem></span>
+    </li>
+  </template>
+
+  <nav class="alt-menu" aria-label="Alt gezinme">
+    <a class="alt-menu__baglanti" href="/menu.html">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#yemek"></use></svg>Menü
+    </a>
+    <a class="alt-menu__baglanti" href="/rezervasyonlarim.html">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#bilet"></use></svg>Rezervasyon
+    </a>
+    <a class="alt-menu__baglanti" href="/bakiye.html">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cuzdan"></use></svg>Bakiye
+    </a>
+    <a class="alt-menu__baglanti" href="/yonetici.html" aria-current="page" data-yonetici>
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#panel"></use></svg>Yönetici
+    </a>
+    <button type="button" class="alt-menu__baglanti" data-cikis>
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cikis"></use></svg>Çıkış
+    </button>
+  </nav>
+</body>
+</html>

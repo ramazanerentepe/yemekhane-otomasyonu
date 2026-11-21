@@ -10,6 +10,7 @@ async function yemekhaneleriGetir() {
 async function ogunleriGetir() {
   const [satirlar] = await okumaHavuzu.query(
     `SELECT id, ad,
+            TIME_FORMAT(son_saat, '%H:%i')         AS son_saat,
             TIME_FORMAT(servis_baslangic, '%H:%i') AS servis_baslangic,
             TIME_FORMAT(servis_bitis, '%H:%i')     AS servis_bitis
        FROM ogunler
