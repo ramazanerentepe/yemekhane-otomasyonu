@@ -1,122 +1,73 @@
-/* =====================================================================
-   Yemekhane Otomasyonu · temel.css
-   Bir başlangıç noktasıdır: renk ve yazı değişkenleri, sıfırlama,
-   form öğeleri ve hata/başarı kutusu. Ekranlarınızın düzenini ve
-   bileşenlerini kendiniz tasarlayın; bu dosyayı değiştirmekte serbestsiniz.
-   Mobil önce yazılmıştır: 400 px genişlikte rahat kullanılmalıdır.
-   ===================================================================== */
+@layer tema, genel, bilesenler, duzen, sayfa;
 
-:root {
-  /* Renkler */
-  --zemin:       #EEF2F0;   /* porselen, sayfa zemini       */
-  --yuzey:       #FFFFFF;   /* içerik alanları              */
-  --metin:       #1F2A2E;   /* ana metin                    */
-  --metin-soluk: #5A686D;   /* ikincil metin, açıklamalar   */
-  --cizgi:       #C9D3D0;   /* kenarlıklar                  */
-  --ana:         #1B6B5A;   /* karo yeşili: ana eylem       */
-  --ana-koyu:    #12503F;
-  --vurgu:       #F2B134;   /* safran: fiyat, boş yer       */
-  --hata:        #B3261E;
-  --hata-zemin:  #FCE8E6;
-  --basari:      #2E6B30;
-  --basari-zemin:#E6F2E6;
+@layer tema {
+  :root {
+    --kirmizi-50: #FDECEC;
+    --kirmizi-500: #E03131;
+    --kirmizi-600: #C92A2A;
+    --kirmizi-700: #B02525;
 
-  /* Yazı */
-  --yazi: "Segoe UI", system-ui, -apple-system, Roboto, "Noto Sans", sans-serif;
-  --boyut-kucuk: 0.875rem;
-  --boyut:       1rem;
-  --boyut-buyuk: 1.25rem;
-  --boyut-baslik: 1.75rem;
+    --notr-0: #FFFFFF;
+    --notr-50: #F4F4F5;
+    --notr-200: #E7E7E7;
+    --notr-300: #D6D6D6;
+    --notr-400: #8A8A8A;
+    --notr-600: #5F5F5F;
+    --notr-800: #2A2A2A;
+    --notr-900: #111111;
 
-  /* Boşluk ve köşe */
-  --bosluk: 1rem;
-  --kose: 6px;
-}
+    --sari-500: #F59F00;
+    --turuncu-50: #FFF4E0;
+    --turuncu-800: #8A5300;
+    --yesil-50: #E9F7EC;
+    --yesil-800: #1F6B33;
 
-*, *::before, *::after { box-sizing: border-box; }
+    --ana: var(--kirmizi-500);
+    --ana-koyu: var(--kirmizi-700);
+    --ana-acik: var(--kirmizi-50);
+    --ana-uzerinde: var(--notr-0);
 
-html { -webkit-text-size-adjust: 100%; }
+    --koyu: var(--notr-900);
+    --koyu-hover: var(--notr-800);
 
-body {
-  margin: 0;
-  font-family: var(--yazi);
-  font-size: var(--boyut);
-  line-height: 1.5;
-  color: var(--metin);
-  background: var(--zemin);
-}
+    --zemin: var(--notr-0);
+    --yuzey: var(--notr-0);
+    --yuzey-gri: var(--notr-50);
+    --cizgi: var(--notr-200);
+    --cizgi-koyu: var(--notr-300);
 
-img, svg { max-width: 100%; height: auto; display: block; }
+    --metin: var(--notr-900);
+    --metin-soluk: var(--notr-600);
+    --metin-silik: var(--notr-400);
 
-h1, h2, h3 { line-height: 1.2; margin: 0 0 0.5em; }
-h1 { font-size: var(--boyut-baslik); }
-h2 { font-size: var(--boyut-buyuk); }
-p  { margin: 0 0 1em; max-width: 70ch; }
+    --vurgu: var(--sari-500);
+    --alerjen: var(--turuncu-800);
+    --alerjen-zemin: var(--turuncu-50);
+    --vejetaryen: var(--yesil-800);
+    --vejetaryen-zemin: var(--yesil-50);
 
-a { color: var(--ana); }
-a:hover { color: var(--ana-koyu); }
+    --hata: var(--kirmizi-600);
+    --hata-zemin: var(--kirmizi-50);
+    --basari: var(--yesil-800);
+    --basari-zemin: var(--yesil-50);
 
-/* Sayfa genişliği: telefonda kenarlara 1rem pay, geniş ekranda ortalı */
-.kapsayici {
-  width: 100%;
-  max-width: 960px;
-  margin-inline: auto;
-  padding-inline: var(--bosluk);
-}
+    --yazi: "Segoe UI", system-ui, -apple-system, Roboto, "Noto Sans", sans-serif;
+    --boyut-kucuk: 0.8125rem;
+    --boyut: 0.9375rem;
+    --boyut-buyuk: 1.25rem;
+    --boyut-baslik: 1.625rem;
+    --kalinlik-normal: 400;
+    --kalinlik-orta: 600;
+    --kalinlik-kalin: 700;
 
-/* ---------- Form öğeleri ---------- */
-label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+    --bosluk: 1rem;
+    --kose: 12px;
+    --kose-buyuk: 16px;
+    --kose-tam: 999px;
 
-input, select, textarea, button { font: inherit; }
+    --gecis: 0.18s ease;
 
-input, select, textarea {
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--cizgi);
-  border-radius: var(--kose);
-  background: var(--yuzey);
-  color: var(--metin);
-}
-
-/* Dokunmatik ekranda rahat basılabilir boyut: en az 44 px */
-.dugme {
-  display: inline-block;
-  min-height: 44px;
-  padding: 0.6rem 1.1rem;
-  border: 0;
-  border-radius: var(--kose);
-  background: var(--ana);
-  color: #fff;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-}
-.dugme:hover { background: var(--ana-koyu); color: #fff; }
-
-/* Örn. rezervasyon son saati geçtiğinde */
-.dugme:disabled,
-.dugme[aria-disabled="true"] {
-  background: var(--cizgi);
-  color: var(--metin-soluk);
-  cursor: not-allowed;
-}
-
-:focus-visible { outline: 3px solid var(--vurgu); outline-offset: 2px; }
-
-/* ---------- Bildirim kutusu ----------
-   Stored procedure'lerden dönen Türkçe hata mesajları buraya yazılabilir:
-   <p class="bildirim bildirim-hata" role="alert">Bakiye yetersiz.</p>       */
-.bildirim {
-  padding: 0.75rem 1rem;
-  border-radius: var(--kose);
-  border-left: 4px solid currentColor;
-}
-.bildirim-hata   { color: var(--hata);   background: var(--hata-zemin); }
-.bildirim-basari { color: var(--basari); background: var(--basari-zemin); }
-
-/* Geniş tabloların sayfayı yana kaydırmaması için sarmalayıcı */
-.tablo-kaydir { overflow-x: auto; }
-
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+    --kapsayici-genislik: 1440px;
+    --ust-menu-yukseklik: 64px;
+  }
 }

@@ -1,0 +1,214 @@
+@layer sayfa {
+  .menu-arac {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .menu-arac__baslik h1 { margin: 0; font-size: 1.375rem; }
+  .menu-arac__baslik p {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: 0;
+    color: var(--metin-soluk);
+    font-size: var(--boyut-kucuk);
+  }
+
+  .hafta-gezinme { display: flex; gap: 0.375rem; margin-left: 0.5rem; }
+  .hafta-gezinme .dugme { min-height: 32px; height: 32px; font-size: var(--boyut-kucuk); }
+  .hafta-gezinme .dugme--simge { width: 32px; }
+  .hafta-gezinme__bugun { padding-inline: 0.75rem; }
+
+  .menu-arac__secimler {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.625rem;
+    margin-left: auto;
+  }
+
+  .yemekhane-secimi {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: 36px;
+    margin: 0;
+    padding-inline: 0.875rem 0.5rem;
+    border: 1px solid var(--cizgi);
+    border-radius: var(--kose-tam);
+    font-size: var(--boyut-kucuk);
+    font-weight: var(--kalinlik-normal);
+    cursor: pointer;
+  }
+  .yemekhane-secimi:focus-within { border-color: var(--ana); }
+  .yemekhane-secimi select {
+    width: auto;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .gun-izgarasi {
+    --kart-bosluk: clamp(14px, 1.5cqi, 24px);
+    --kart-yazi: clamp(0.875rem, 1.2cqi, 1.1875rem);
+    --kart-kucuk-yazi: clamp(0.75rem, 1cqi, 0.9375rem);
+
+    --kart-arasi: 14px;
+
+    container-type: inline-size;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--kart-arasi);
+    padding-top: 0.5rem;
+  }
+
+  .gun-karti {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto 1fr auto auto auto;
+    grid-template-areas:
+      "tarih    etiket"
+      "yemekler yemekler"
+      "servis   servis"
+      "fiyat    fiyat"
+      "puan     puan";
+    flex: 0 0 calc((100% - 3 * var(--kart-arasi)) / 4);
+    gap: clamp(7px, 0.7cqi, 10px);
+    min-height: clamp(212px, 20cqi, 320px);
+    padding: var(--kart-bosluk);
+    border: 1px solid var(--cizgi);
+    border-radius: var(--kose-buyuk);
+    background: var(--yuzey);
+    color: var(--metin);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .gun-karti:hover { transform: translateY(-2px); border-color: var(--ana); }
+
+  .gun-karti--bugun { padding: calc(var(--kart-bosluk) - 1px); border: 2px solid var(--ana); }
+  .gun-karti--gecmis { opacity: 0.55; }
+
+  .gun-karti--bos {
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "tarih etiket"
+      "bos   bos";
+    cursor: default;
+  }
+  .gun-karti--bos:hover { transform: none; border-color: var(--cizgi); }
+  .gun-karti--bos.gun-karti--bugun:hover { border-color: var(--ana); }
+
+  .gun-karti__tarih { grid-area: tarih; display: flex; align-items: baseline; gap: 6px; }
+  .gun-karti__gun { font-size: clamp(1.5rem, 2.4cqi, 2.375rem); font-weight: var(--kalinlik-orta); line-height: 1.1; }
+  .gun-karti__gun-adi { color: var(--metin-soluk); font-size: clamp(0.8125rem, 1.1cqi, 1.0625rem); }
+
+  .gun-karti__etiket { grid-area: etiket; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; align-self: center; color: var(--metin-soluk); font-size: clamp(0.6875rem, 0.85cqi, 0.8125rem); }
+  .gun-karti__etiket .rozet { padding: 2px 8px; font-size: inherit; font-weight: var(--kalinlik-normal); }
+
+  .gun-karti__yemekler {
+    grid-area: yemekler;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--kart-yazi);
+    line-height: 1.55;
+  }
+  .gun-karti__fazla { color: var(--metin-soluk); font-size: var(--kart-kucuk-yazi); }
+
+  .gun-karti__servis {
+    grid-area: servis;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--metin-soluk);
+    font-size: var(--kart-kucuk-yazi);
+  }
+
+  .gun-karti__fiyat {
+    grid-area: fiyat;
+    color: var(--ana);
+    font-size: clamp(0.9375rem, 1.4cqi, 1.375rem);
+    font-weight: var(--kalinlik-orta);
+  }
+
+  .gun-karti__puan { grid-area: puan; color: var(--metin-soluk); font-size: var(--kart-kucuk-yazi); }
+  .gun-karti__puan .yildizlar { font-size: 1.1em; }
+
+  .gun-karti__bos-mesaj {
+    grid-area: bos;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--metin-soluk);
+    font-size: var(--kart-kucuk-yazi);
+  }
+  .gun-karti__bos-mesaj .ikon { width: 1.75em; height: 1.75em; }
+
+  @media (max-width: 720px) {
+    .menu-arac {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px 8px;
+    }
+    .menu-arac__baslik h1 { font-size: 1.1875rem; }
+    .menu-arac__baslik p { font-size: 0.75rem; }
+
+    .hafta-gezinme { margin-left: 0; }
+    .hafta-gezinme__bugun { display: none; }
+
+    .menu-arac__secimler { grid-column: 1 / -1; display: grid; gap: 10px; margin-left: 0; }
+    .yemekhane-secimi select { flex: 1; }
+    .ogun-secici { display: grid; grid-template-columns: repeat(3, 1fr); }
+
+    .gun-izgarasi { --kart-arasi: 10px; flex-direction: column; flex-wrap: nowrap; }
+
+    .gun-karti {
+      grid-template-columns: 52px minmax(0, 1fr) auto;
+      grid-template-rows: auto;
+      grid-template-areas:
+        "tarih yemekler etiket"
+        "tarih servis   fiyat"
+        "tarih puan     puan";
+      flex: none;
+      gap: 4px 12px;
+      min-height: 0;
+      padding: 12px;
+    }
+    .gun-karti--bugun { padding: 11px; }
+    .gun-karti__gun-adi,
+    .gun-karti__etiket { font-size: 0.6875rem; }
+    .gun-karti--bos { grid-template-areas: "tarih bos etiket"; }
+
+    .gun-karti__tarih {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding-block: 6px;
+      border-radius: var(--kose);
+      background: var(--yuzey-gri);
+    }
+    .gun-karti--bugun .gun-karti__tarih { background: var(--ana); color: var(--ana-uzerinde); }
+    .gun-karti--bugun .gun-karti__gun-adi { color: inherit; }
+    .gun-karti__gun { font-size: 1.25rem; }
+    .gun-karti__gun-adi { font-size: 0.6875rem; }
+
+    .gun-karti__yemekler { overflow: hidden; font-weight: var(--kalinlik-orta); text-overflow: ellipsis; white-space: nowrap; }
+    .gun-karti__yemekler li { display: inline; }
+    .gun-karti__yemekler li + li::before { content: " · "; }
+    .gun-karti__fazla { display: none !important; }
+
+    .gun-karti__fiyat { font-size: 0.75rem; text-align: right; }
+    .gun-karti__bos-mesaj { flex-direction: row; justify-content: flex-start; }
+  }
+}

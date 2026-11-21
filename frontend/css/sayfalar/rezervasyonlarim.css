@@ -1,0 +1,149 @@
+@layer sayfa {
+  .rezervasyon-baslik {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .rezervasyon-baslik .sayfa-basligi { margin: 0; }
+
+  .rezervasyon-filtre__sayi {
+    min-width: 1.5em;
+    padding: 0 0.375rem;
+    border-radius: var(--kose-tam);
+    background: rgb(0 0 0 / 0.06);
+    font-size: 0.75rem;
+  }
+  .segment__secenek[aria-pressed="true"] .rezervasyon-filtre__sayi { background: rgb(255 255 255 / 0.25); }
+  .rezervasyon-filtre__sayi:empty { display: none; }
+
+  .rezervasyon-listesi {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rezervasyon {
+    position: relative;
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid var(--cizgi);
+    border-radius: var(--kose-buyuk);
+    background: var(--yuzey);
+    cursor: pointer;
+    transition: border-color var(--gecis), transform 0.15s ease;
+  }
+  .rezervasyon:hover { border-color: var(--ana); transform: translateY(-1px); }
+  .rezervasyon:has(.rezervasyon__ac:focus-visible) { outline: 3px solid var(--ana); outline-offset: 2px; }
+
+  .rezervasyon__ac {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .rezervasyon__ac:focus-visible { outline: none; }
+  .rezervasyon__ac::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  .rezervasyon__tarih {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    min-height: 60px;
+    border-radius: var(--kose);
+    background: var(--yuzey-gri);
+  }
+  .rezervasyon__gun { font-size: 1.375rem; font-weight: var(--kalinlik-orta); line-height: 1.1; }
+  .rezervasyon__ay { color: var(--metin-soluk); font-size: 0.75rem; }
+
+  .rezervasyon--aktif .rezervasyon__tarih { background: var(--ana); color: var(--ana-uzerinde); }
+  .rezervasyon--aktif .rezervasyon__ay { color: inherit; opacity: 0.85; }
+
+  .rezervasyon__bilgi { display: grid; gap: 3px; min-width: 0; }
+
+  .rezervasyon__ust { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+  .rezervasyon__baslik { font-weight: var(--kalinlik-orta); }
+  .rezervasyon__ust .rozet { padding: 2px 8px; font-size: 0.6875rem; }
+
+  .rezervasyon__yemekler {
+    max-width: none;
+    margin: 0;
+    overflow: hidden;
+    color: var(--metin-soluk);
+    font-size: var(--boyut-kucuk);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rezervasyon__meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    max-width: none;
+    margin: 0;
+    color: var(--metin-soluk);
+    font-size: 0.75rem;
+  }
+
+  .rezervasyon__sag { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .rezervasyon__ucret { color: var(--ana); font-size: 1.0625rem; font-weight: var(--kalinlik-orta); white-space: nowrap; }
+  .rezervasyon__not { color: var(--metin-silik); font-size: 0.6875rem; text-align: right; }
+  .rezervasyon__not:empty { display: none; }
+  .rezervasyon__iptal { position: relative; z-index: 1; min-height: 34px; padding: 0.375rem 0.875rem; font-size: var(--boyut-kucuk); }
+  .rezervasyon__iptal:hover { border-color: var(--ana); background: var(--ana-acik); color: var(--ana-koyu); }
+
+  .rezervasyon--iptal { opacity: 0.6; }
+  .rezervasyon--iptal .rezervasyon__ucret { color: var(--metin-soluk); text-decoration: line-through; }
+  .rezervasyon--gecmis .rezervasyon__ucret { color: var(--metin); }
+
+  .bos-liste {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 3rem 1.5rem;
+    border: 1px dashed var(--cizgi);
+    border-radius: var(--kose-buyuk);
+    color: var(--metin-soluk);
+    text-align: center;
+  }
+  .bos-liste .ikon { width: 40px; height: 40px; color: var(--metin-silik); }
+  .bos-liste p { margin: 0; }
+
+  @media (max-width: 720px) {
+    .rezervasyon-baslik { flex-direction: column; align-items: stretch; }
+    .rezervasyon-filtre { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .rezervasyon-filtre .segment__secenek { padding-inline: 0.25rem; }
+
+    .rezervasyon {
+      grid-template-columns: 52px minmax(0, 1fr);
+      grid-template-areas:
+        "tarih bilgi"
+        "tarih sag";
+      gap: 8px 12px;
+      padding: 12px;
+    }
+    .rezervasyon__tarih { grid-area: tarih; }
+    .rezervasyon__bilgi { grid-area: bilgi; }
+    .rezervasyon__sag { grid-area: sag; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+    .rezervasyon__not { text-align: left; }
+
+  }
+}

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#E03131">
+  <title>Menü · Yemekhane</title>
+  <link rel="stylesheet" href="/css/temel.css">
+  <link rel="stylesheet" href="/css/genel.css">
+  <link rel="stylesheet" href="/css/bilesenler.css">
+  <link rel="stylesheet" href="/css/duzen.css">
+  <link rel="stylesheet" href="/css/menu-detay.css">
+  <link rel="stylesheet" href="/css/sayfalar/menu.css">
+  <script type="module" src="/js/sayfalar/menu.js"></script>
+</head>
+<body>
+  <header class="ust-menu">
+    <div class="kapsayici ust-menu__ic">
+      <a class="logo" href="/menu.html">
+        <span class="logo__simge"><svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#yemek"></use></svg></span>
+        <span class="logo__metin">
+          <span class="logo__ad">Yemekhane</span>
+          <span class="logo__alt">Kampüs rezervasyon</span>
+        </span>
+      </a>
+
+      <nav class="ust-menu__gezinme" aria-label="Ana gezinme">
+        <a class="ust-menu__baglanti" href="/menu.html" aria-current="page">Menü</a>
+        <a class="ust-menu__baglanti" href="/rezervasyonlarim.html">Rezervasyonlarım</a>
+        <a class="ust-menu__baglanti" href="/bakiye.html">Bakiye</a>
+        <a class="ust-menu__baglanti" href="/yonetici.html" data-yonetici hidden>Yönetici</a>
+      </nav>
+
+      <div class="ust-menu__sag">
+        <span class="bakiye-etiketi">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cuzdan"></use></svg>
+          <span data-bakiye>—</span>
+        </span>
+        <span class="avatar" data-avatar aria-hidden="true"></span>
+        <button type="button" class="dugme dugme--simge" data-cikis aria-label="Çıkış yap">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cikis"></use></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="kapsayici sayfa">
+    <div class="menu-arac">
+      <div class="menu-arac__baslik">
+        <h1>Haftalık menü</h1>
+        <p>
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#takvim"></use></svg>
+          <span data-hafta-metni></span>
+        </p>
+      </div>
+
+      <div class="hafta-gezinme">
+        <button type="button" class="dugme dugme--ikincil dugme--simge" data-hafta="-1" aria-label="Önceki hafta">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#ok-sol"></use></svg>
+        </button>
+        <button type="button" class="dugme dugme--ikincil hafta-gezinme__bugun" data-hafta="0">Bugün</button>
+        <button type="button" class="dugme dugme--ikincil dugme--simge" data-hafta="1" aria-label="Sonraki hafta">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#ok-sag"></use></svg>
+        </button>
+      </div>
+
+      <div class="menu-arac__secimler">
+        <label class="yemekhane-secimi">
+          <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#bina"></use></svg>
+          <span class="gorunmez">Yemekhane</span>
+          <select id="yemekhane"></select>
+        </label>
+        <div class="segment ogun-secici" role="group" aria-label="Öğün" data-ogunler></div>
+      </div>
+    </div>
+
+    <p id="sayfa-bildirim" class="bildirim bildirim-hata" role="alert" hidden></p>
+
+    <div class="gun-izgarasi" data-gunler></div>
+  </main>
+
+  <template id="gun-karti-sablonu">
+    <button type="button" class="gun-karti">
+      <span class="gun-karti__tarih">
+        <span class="gun-karti__gun" data-gun></span>
+        <span class="gun-karti__gun-adi" data-gun-adi></span>
+      </span>
+      <span class="gun-karti__etiket" data-etiket></span>
+      <ul class="gun-karti__yemekler" data-yemekler></ul>
+      <span class="gun-karti__servis">
+        <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#saat"></use></svg>
+        <span data-servis></span>
+      </span>
+      <span class="gun-karti__fiyat" data-fiyat></span>
+      <span class="gun-karti__puan" data-puan></span>
+    </button>
+  </template>
+
+  <template id="bos-gun-sablonu">
+    <div class="gun-karti gun-karti--bos">
+      <span class="gun-karti__tarih">
+        <span class="gun-karti__gun" data-gun></span>
+        <span class="gun-karti__gun-adi" data-gun-adi></span>
+      </span>
+      <span class="gun-karti__etiket" data-etiket></span>
+      <span class="gun-karti__bos-mesaj">
+        <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#ay"></use></svg>
+        Menü yok
+      </span>
+    </div>
+  </template>
+
+  <nav class="alt-menu" aria-label="Alt gezinme">
+    <a class="alt-menu__baglanti" href="/menu.html" aria-current="page">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#yemek"></use></svg>Menü
+    </a>
+    <a class="alt-menu__baglanti" href="/rezervasyonlarim.html">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#bilet"></use></svg>Rezervasyon
+    </a>
+    <a class="alt-menu__baglanti" href="/bakiye.html">
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cuzdan"></use></svg>Bakiye
+    </a>
+    <a class="alt-menu__baglanti" href="/yonetici.html" data-yonetici hidden>
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#panel"></use></svg>Yönetici
+    </a>
+    <button type="button" class="alt-menu__baglanti" data-cikis>
+      <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cikis"></use></svg>Çıkış
+    </button>
+  </nav>
+</body>
+</html>
