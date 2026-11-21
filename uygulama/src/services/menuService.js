@@ -34,6 +34,10 @@ async function haftalikMenu(yemekhaneId, ogunId, tarih, { kullaniciId, rol }) {
       rezervasyon_acik: menu.rezervasyon_acik === 1,
       rezerve_edildi: menu.rezervasyon_id !== null,
       rezervasyon_id: menu.rezervasyon_id,
+      rezervasyon_durumu: menu.rezervasyon_durumu,
+      degerlendirme: menu.benim_puanim === null
+        ? null
+        : { puan: menu.benim_puanim, yorum: menu.benim_yorumum },
       ortalama_puan: menu.ortalama_puan,
       oy_sayisi: menu.oy_sayisi,
       yemekler: yemekler.filter((y) => y.menu_id === menu.menu_id).map((y) => y.yemek),

@@ -5,6 +5,7 @@ async function kullanicininRezervasyonlari(kullaniciId) {
     `SELECT r.id, r.durum, r.ucret, m.id AS menu_id, m.tarih,
             m.yemekhane_id, m.ogun_id, o.ad AS ogun, yh.ad AS yemekhane,
             p.ortalama_puan, p.oy_sayisi,
+            d.puan AS benim_puanim, d.yorum AS benim_yorumum,
             TIME_FORMAT(o.servis_baslangic, '%H:%i') AS servis_baslangic,
             TIME_FORMAT(o.servis_bitis, '%H:%i')     AS servis_bitis,
             TIME_FORMAT(o.son_saat, '%H:%i')         AS iptal_son_saat,
@@ -20,6 +21,8 @@ async function kullanicininRezervasyonlari(kullaniciId) {
        JOIN ogunler o       ON o.id = m.ogun_id
        JOIN yemekhaneler yh ON yh.id = m.yemekhane_id
        JOIN v_menu_puan p   ON p.menu_id = m.id
+       LEFT JOIN degerlendirmeler d
+              ON d.menu_id = r.menu_id AND d.kullanici_id = r.kullanici_id
       WHERE r.kullanici_id = ?
       ORDER BY m.tarih DESC, o.sira DESC`,
     [kullaniciId]

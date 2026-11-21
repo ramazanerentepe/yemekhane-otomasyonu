@@ -14,6 +14,9 @@ async function rezervasyonlarim(kullaniciId) {
     yemekhane: satir.yemekhane,
     ortalama_puan: satir.ortalama_puan,
     oy_sayisi: satir.oy_sayisi,
+    degerlendirme: satir.benim_puanim === null
+      ? null
+      : { puan: satir.benim_puanim, yorum: satir.benim_yorumum },
     servis_baslangic: satir.servis_baslangic,
     servis_bitis: satir.servis_bitis,
     iptal_son_saat: satir.iptal_son_saat,

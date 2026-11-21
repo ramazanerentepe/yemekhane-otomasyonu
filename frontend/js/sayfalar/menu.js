@@ -85,7 +85,10 @@ function gunKarti(tarih, menu, istek) {
     kart.classList.add('gun-karti--gecmis');
     etiket.append('Sona erdi');
   }
-  if (menu?.rezerve_edildi) etiket.prepend(eleman('span', 'rozet rozet--basari', 'Rezerve'));
+  if (menu?.rezerve_edildi) {
+    const kullanildi = menu.rezervasyon_durumu === 'kullanildi';
+    etiket.prepend(eleman('span', 'rozet rozet--basari', kullanildi ? 'Kullanıldı' : 'Rezerve'));
+  }
 
   if (!menu) return kart;
 
@@ -134,6 +137,9 @@ async function haftayiYukle() {
 }
 
 function rezervasyonEylemi(menu) {
+  if (menu.rezervasyon_durumu === 'kullanildi') {
+    return { mesaj: 'Bu menüyü kullandın.', mesajTuru: 'basari' };
+  }
   if (menu.rezerve_edildi) {
     return menu.rezervasyon_acik
       ? { dugme: { metin: 'İptal et', aktif: true }, mesaj: 'Bu menü için rezervasyonunuz var.', mesajTuru: 'basari' }
@@ -160,10 +166,25 @@ async function detayiAc(tarih, menu, istek) {
       bosYer: menu.bos_yer,
       eylem: rezervasyonEylemi(menu),
       dugmeyeTiklaninca: () => (menu.rezerve_edildi ? iptaleYonlendir(menu) : rezervasyonYap(menu)),
+      degerlendirme: menu.rezervasyon_durumu === 'kullanildi'
+        ? { mevcut: menu.degerlendirme, kaydet: (veri) => degerlendirmeKaydet(menu, veri) }
+        : null,
     });
   } catch (hata) {
     bildirimGoster(ogeler.bildirim, hata.message);
   }
+}
+
+async function degerlendirmeKaydet(menu, { puan, yorum }) {
+  const sonuc = await api('/degerlendirmeler', {
+    method: 'POST',
+    govde: { menu_id: menu.id, puan, yorum },
+  });
+  menu.degerlendirme = sonuc.degerlendirme;
+  menu.ortalama_puan = sonuc.ortalama_puan;
+  menu.oy_sayisi = sonuc.oy_sayisi;
+  haftayiGoster(durum.hafta, durum.istek);
+  return sonuc;
 }
 
 function iptaleYonlendir(menu) {
