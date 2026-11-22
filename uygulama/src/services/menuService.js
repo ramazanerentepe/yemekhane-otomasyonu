@@ -1,4 +1,5 @@
 const menuRepository = require('../repositories/menuRepository');
+const menuOnbellegiRepository = require('../repositories/menuOnbellegiRepository');
 const istekHatasi = require('../utils/istekHatasi');
 
 const roleGoreFiyat = (menu, rol) =>
@@ -45,8 +46,42 @@ async function haftalikMenu(yemekhaneId, ogunId, tarih, { kullaniciId, rol }) {
   };
 }
 
-async function gununMenusu(yemekhaneId, tarih, ogunId, rol) {
+async function onbellektenOku(yemekhaneId, tarih, ogunId) {
+  try {
+    return await menuOnbellegiRepository.getir(yemekhaneId, tarih, ogunId);
+  } catch (hata) {
+    console.error('[önbellek] okunamadı:', hata.message);
+    return null;
+  }
+}
+
+async function onbellegeYaz(yemekhaneId, tarih, ogunId, satirlar) {
+  try {
+    return await menuOnbellegiRepository.yaz(yemekhaneId, tarih, ogunId, satirlar);
+  } catch (hata) {
+    console.error('[önbellek] yazılamadı:', hata.message);
+    return null;
+  }
+}
+
+async function menuSatirlari(yemekhaneId, tarih, ogunId) {
+  const anahtar = menuOnbellegiRepository.anahtar(yemekhaneId, tarih, ogunId);
+  const onbellekteki = await onbellektenOku(yemekhaneId, tarih, ogunId);
+  if (onbellekteki) {
+    console.log(`[önbellek] ${anahtar} Redis'ten okundu`);
+    return onbellekteki;
+  }
+
   const satirlar = await menuRepository.gununMenusunuGetir(yemekhaneId, tarih, ogunId);
+  if (satirlar.length > 0) {
+    const sure = await onbellegeYaz(yemekhaneId, tarih, ogunId, satirlar);
+    console.log(`[önbellek] ${anahtar} veritabanından okundu${sure ? `, Redis'e yazıldı (TTL ${sure} sn)` : ''}`);
+  }
+  return satirlar;
+}
+
+async function gununMenusu(yemekhaneId, tarih, ogunId, rol) {
+  const satirlar = await menuSatirlari(yemekhaneId, tarih, ogunId);
   if (satirlar.length === 0) {
     throw istekHatasi(404, 'Bu gün ve öğün için menü bulunmuyor.');
   }

@@ -1,8 +1,10 @@
 const yoneticiRepository = require('../repositories/yoneticiRepository');
 const menuRepository = require('../repositories/menuRepository');
+const menuOnbellegiRepository = require('../repositories/menuOnbellegiRepository');
 const istekHatasi = require('../utils/istekHatasi');
 
 const AYNI_KAYIT = 1062;
+const IKINCI_SILME_GECIKMESI = 2000;
 
 function menuyuDonustur(menu, yemekler) {
   return {
@@ -68,8 +70,24 @@ async function yemekleriDogrula(baglanti, yemekIdler) {
   }
 }
 
+async function onbellekKaydiniSil(menu, neden) {
+  const anahtar = menuOnbellegiRepository.anahtar(menu.yemekhane_id, menu.tarih, menu.ogun_id);
+  try {
+    const silinen = await menuOnbellegiRepository.sil(menu.yemekhane_id, menu.tarih, menu.ogun_id);
+    console.log(`[önbellek] ${anahtar} ${silinen ? 'silindi' : 'önbellekte yoktu'} (${neden})`);
+  } catch (hata) {
+    console.error(`[önbellek] ${anahtar} silinemedi:`, hata.message);
+  }
+}
+
+function onbellegiGecersizKil(menu) {
+  onbellekKaydiniSil(menu, 'menü kaydedildi');
+  setTimeout(() => onbellekKaydiniSil(menu, 'replikasyon gecikmesine karşı ikinci silme'), IKINCI_SILME_GECIKMESI);
+}
+
 async function kaydedilenMenu(menuId, mesaj) {
   const { menu, yemekler } = await yoneticiRepository.menuRaporuKaynaktan(menuId);
+  onbellegiGecersizKil(menu);
   return { mesaj, menu: menuyuDonustur(menu, yemekler) };
 }
 
