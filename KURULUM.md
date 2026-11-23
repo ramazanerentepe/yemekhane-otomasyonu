@@ -60,7 +60,9 @@ rezervasyonlarım · bakiye · değerlendirme · yönetici paneli · profil (ale
 | `asama-3` | Redis: menü önbelleği (`menu:*`) ve oturumlar (`oturum:*`) |
 | `asama-4` | `04_degisiklik.sql`: yarım porsiyon ve alerjen uyarısı, API ve arayüz güncellemesi |
 
-Rapor ve ekran görüntüleri `rapor/` klasöründedir.
+Rapor `rapor/` klasöründedir: `rapor.pdf` teslim edilen kısa rapor, `ayrintili_rapor.md` her adımın
+komutunu, çıktısını ve açıklamasını içeren ayrıntılı rapordur. Ekran görüntüleri her aşamanın
+kendi klasöründedir (`rapor/asama-1`, `rapor/asama-2`, `rapor/asama-3`, `rapor/asama-4`).
 
 ## Proje yapısı
 
