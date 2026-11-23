@@ -75,7 +75,10 @@ async function menuSatirlari(yemekhaneId, tarih, ogunId) {
   const satirlar = await menuRepository.gununMenusunuGetir(yemekhaneId, tarih, ogunId);
   if (satirlar.length > 0) {
     const sure = await onbellegeYaz(yemekhaneId, tarih, ogunId, satirlar);
-    console.log(`[önbellek] ${anahtar} veritabanından okundu${sure ? `, Redis'e yazıldı (TTL ${sure} sn)` : ''}`);
+    const sonuc = sure > 0
+      ? `, Redis'e yazıldı (TTL ${sure} sn)`
+      : sure === 0 ? ' (geçmiş gün, önbelleğe yazılmadı)' : '';
+    console.log(`[önbellek] ${anahtar} veritabanından okundu${sonuc}`);
   }
   return satirlar;
 }

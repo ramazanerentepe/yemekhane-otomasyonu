@@ -2,10 +2,10 @@ const { redisIstemcisi } = require('../config/redis');
 
 const anahtar = (yemekhaneId, tarih, ogunId) => `menu:${yemekhaneId}:${tarih}:${ogunId}`;
 
-function gunSonunaKalanSaniye() {
-  const simdi = new Date();
-  const geceYarisi = new Date(simdi.getFullYear(), simdi.getMonth(), simdi.getDate() + 1);
-  return Math.max(60, Math.ceil((geceYarisi - simdi) / 1000));
+function menununGunSonunaKalanSaniye(tarih) {
+  const [yil, ay, gun] = tarih.split('-').map(Number);
+  const gunSonu = new Date(yil, ay - 1, gun + 1);
+  return Math.ceil((gunSonu - Date.now()) / 1000);
 }
 
 async function getir(yemekhaneId, tarih, ogunId) {
@@ -14,7 +14,8 @@ async function getir(yemekhaneId, tarih, ogunId) {
 }
 
 async function yaz(yemekhaneId, tarih, ogunId, satirlar) {
-  const sure = gunSonunaKalanSaniye();
+  const sure = menununGunSonunaKalanSaniye(tarih);
+  if (sure <= 0) return 0;
   await redisIstemcisi.set(anahtar(yemekhaneId, tarih, ogunId), JSON.stringify(satirlar), {
     expiration: { type: 'EX', value: sure },
   });
