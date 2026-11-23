@@ -5,6 +5,7 @@ async function rezervasyonlarim(kullaniciId) {
   return satirlar.map((satir) => ({
     id: satir.id,
     durum: satir.durum,
+    porsiyon: satir.porsiyon,
     ucret: satir.ucret,
     menu_id: satir.menu_id,
     tarih: satir.tarih,
@@ -26,10 +27,11 @@ async function rezervasyonlarim(kullaniciId) {
   }));
 }
 
-async function rezervasyonYap(kullaniciId, menuId) {
-  const sonuc = await rezervasyonRepository.rezervasyonYap(kullaniciId, menuId);
+async function rezervasyonYap(kullaniciId, menuId, porsiyon) {
+  const sonuc = await rezervasyonRepository.rezervasyonYap(kullaniciId, menuId, porsiyon);
   return {
     rezervasyon_id: sonuc.rezervasyon_id,
+    porsiyon: sonuc.porsiyon,
     ucret: sonuc.ucret,
     bakiye: sonuc.bakiye,
     mesaj: 'Rezervasyon oluşturuldu.',

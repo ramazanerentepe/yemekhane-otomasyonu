@@ -6,6 +6,7 @@ const rezervasyonRoutes = require('./routes/rezervasyonRoutes');
 const bakiyeRoutes = require('./routes/bakiyeRoutes');
 const degerlendirmeRoutes = require('./routes/degerlendirmeRoutes');
 const yoneticiRoutes = require('./routes/yoneticiRoutes');
+const profilRoutes = require('./routes/profilRoutes');
 const { bulunamadi, hataYakalayici } = require('./middleware/hata');
 
 const app = express();
@@ -18,6 +19,7 @@ app.use('/api', rezervasyonRoutes);
 app.use('/api', bakiyeRoutes);
 app.use('/api', degerlendirmeRoutes);
 app.use('/api', yoneticiRoutes);
+app.use('/api', profilRoutes);
 app.use(bulunamadi);
 app.use(hataYakalayici);
 
