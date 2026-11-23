@@ -112,6 +112,8 @@
 
   .gun-karti__etiket { grid-area: etiket; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; align-self: center; color: var(--metin-soluk); font-size: clamp(0.6875rem, 0.85cqi, 0.8125rem); }
   .gun-karti__etiket .rozet { padding: 2px 8px; font-size: inherit; font-weight: var(--kalinlik-normal); }
+  .gun-karti__etiket .gun-karti__alerjen { gap: 3px; background: var(--ana); color: var(--ana-uzerinde); font-weight: var(--kalinlik-orta); }
+  .gun-karti__alerjen .ikon { width: 1.1em; height: 1.1em; }
 
   .gun-karti__yemekler {
     grid-area: yemekler;
@@ -176,9 +178,9 @@
       grid-template-columns: 52px minmax(0, 1fr) auto;
       grid-template-rows: auto;
       grid-template-areas:
-        "tarih yemekler etiket"
+        "tarih yemekler yemekler"
         "tarih servis   fiyat"
-        "tarih puan     puan";
+        "tarih puan     etiket";
       flex: none;
       gap: 4px 12px;
       min-height: 0;
@@ -208,6 +210,9 @@
     .gun-karti__yemekler li + li::before { content: " · "; }
     .gun-karti__fazla { display: none !important; }
 
+    .gun-karti__alerjen { padding: 2px 5px; }
+    .gun-karti__alerjen span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .gun-karti__servis { white-space: nowrap; }
     .gun-karti__fiyat { font-size: 0.75rem; text-align: right; }
     .gun-karti__bos-mesaj { flex-direction: row; justify-content: flex-start; }
   }

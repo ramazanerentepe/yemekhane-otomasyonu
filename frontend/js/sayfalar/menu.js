@@ -37,6 +37,18 @@ const bicim = {
 
 const sablondanKopyala = (id) => document.getElementById(id).content.firstElementChild.cloneNode(true);
 
+function alerjenRozeti() {
+  const rozet = sablondanKopyala('alerjen-rozeti-sablonu');
+  rozet.title = 'Seçtiğin bir alerjeni içeren yemek var';
+  return rozet;
+}
+
+function rezervasyonRozeti(menu) {
+  if (menu.rezervasyon_durumu === 'kullanildi') return eleman('span', 'rozet rozet--basari', 'Kullanıldı');
+  const metin = menu.rezervasyon_porsiyonu === 'yarim' ? 'Rezerve · Yarım' : 'Rezerve';
+  return eleman('span', 'rozet rozet--basari', metin);
+}
+
 function servisMetni(ogunId) {
   const ogun = durum.ogunler.find((o) => o.id === ogunId);
   return ogun ? `${ogun.servis_baslangic}–${ogun.servis_bitis}` : '';
@@ -85,10 +97,8 @@ function gunKarti(tarih, menu, istek) {
     kart.classList.add('gun-karti--gecmis');
     etiket.append('Sona erdi');
   }
-  if (menu?.rezerve_edildi) {
-    const kullanildi = menu.rezervasyon_durumu === 'kullanildi';
-    etiket.prepend(eleman('span', 'rozet rozet--basari', kullanildi ? 'Kullanıldı' : 'Rezerve'));
-  }
+  if (menu?.rezerve_edildi) etiket.prepend(rezervasyonRozeti(menu));
+  if (menu?.alerjen_uyarisi) etiket.prepend(alerjenRozeti());
 
   if (!menu) return kart;
 
@@ -164,6 +174,10 @@ async function detayiAc(tarih, menu, istek) {
       menuId: menu.id,
       puan: menu,
       bosYer: menu.bos_yer,
+      porsiyon: {
+        secilebilir: !menu.rezerve_edildi,
+        secili: menu.rezervasyon_porsiyonu ?? 'tam',
+      },
       eylem: rezervasyonEylemi(menu),
       dugmeyeTiklaninca: () => (menu.rezerve_edildi ? iptaleYonlendir(menu) : rezervasyonYap(menu)),
       degerlendirme: menu.rezervasyon_durumu === 'kullanildi'
@@ -193,14 +207,17 @@ function iptaleYonlendir(menu) {
 
 async function rezervasyonYap(menu) {
   detay.eylemiGoster({ dugme: { metin: 'İşleniyor…', aktif: false } });
+  const porsiyon = detay.seciliPorsiyon();
 
   try {
-    const sonuc = await api('/rezervasyonlar', { method: 'POST', govde: { menu_id: menu.id } });
+    const sonuc = await api('/rezervasyonlar', { method: 'POST', govde: { menu_id: menu.id, porsiyon } });
     menu.rezerve_edildi = true;
     menu.rezervasyon_id = sonuc.rezervasyon_id;
+    menu.rezervasyon_porsiyonu = sonuc.porsiyon;
     menu.bos_yer -= 1;
     bakiyeyiGoster(sonuc.bakiye);
     detay.bosYeriGoster(menu.bos_yer);
+    detay.porsiyonuGoster({ secilebilir: false, secili: sonuc.porsiyon });
     detay.eylemiGoster({
       dugme: { metin: 'İptal et', aktif: true },
       mesaj: `${sonuc.mesaj} Yeni bakiye: ${paraBicimle(sonuc.bakiye)}`,

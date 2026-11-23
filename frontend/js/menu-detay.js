@@ -31,6 +31,10 @@ const ISKELET = `
     </header>
 
     <div class="detay__govde">
+      <div class="detay__alerjen" data-detay-alerjen role="note" hidden>
+        <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#uyari"></use></svg>
+        <p data-detay-alerjen-metin></p>
+      </div>
       <ul class="detay__yemekler" data-detay-yemekler></ul>
 
       <ul class="detay__bilgiler">
@@ -51,7 +55,17 @@ const ISKELET = `
       </ul>
 
       <div class="detay__eylem">
-        <strong class="detay__fiyat" data-detay-fiyat></strong>
+        <div class="detay__porsiyon" data-detay-porsiyon-secimi hidden>
+          <span class="detay__porsiyon-etiket" id="detay-porsiyon-etiketi">Porsiyon</span>
+          <div class="segment detay__porsiyon-secenekler" role="group" aria-labelledby="detay-porsiyon-etiketi">
+            <button type="button" class="segment__secenek" data-porsiyon="tam">Tam <small data-porsiyon-fiyat="tam"></small></button>
+            <button type="button" class="segment__secenek" data-porsiyon="yarim">Yarım <small data-porsiyon-fiyat="yarim"></small></button>
+          </div>
+        </div>
+        <div class="detay__fiyat-kutusu">
+          <strong class="detay__fiyat" data-detay-fiyat></strong>
+          <small class="detay__porsiyon-adi" data-detay-porsiyon-adi></small>
+        </div>
         <span class="detay__puan" data-detay-puan></span>
         <button type="button" class="dugme detay__dugme" data-detay-dugme></button>
       </div>
@@ -90,16 +104,40 @@ const ISKELET = `
     </div>
   </dialog>`;
 
+const PORSIYON_ADLARI = { tam: 'Tam porsiyon', yarim: 'Yarım porsiyon' };
+
+function uyariSimgesi() {
+  const simge = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  simge.setAttribute('class', 'ikon');
+  simge.setAttribute('aria-hidden', 'true');
+  const kullan = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  kullan.setAttribute('href', '/img/ikonlar.svg#uyari');
+  simge.append(kullan);
+  return simge;
+}
+
 function yemekSatiri(yemek) {
-  const satir = eleman('li', 'detay-yemek');
+  const uyarilar = new Set(yemek.uyari_alerjenleri ?? []);
+  const satir = eleman('li', uyarilar.size > 0 ? 'detay-yemek detay-yemek--dikkat' : 'detay-yemek');
+  const ad = eleman('span', 'detay-yemek__ad', yemek.ad);
+  if (uyarilar.size > 0) ad.prepend(uyariSimgesi());
+
   const etiketler = eleman('span', 'detay-yemek__etiketler');
-  etiketler.append(...yemek.alerjenler.map((alerjen) => eleman('span', 'rozet rozet--alerjen', alerjen)));
-  satir.append(
-    eleman('span', 'detay-yemek__ad', yemek.ad),
-    etiketler,
-    eleman('span', 'detay-yemek__kalori', `${yemek.kalori} kcal`)
-  );
+  etiketler.append(...yemek.alerjenler.map((alerjen) =>
+    eleman('span', uyarilar.has(alerjen) ? 'rozet rozet--eslesen' : 'rozet rozet--alerjen', alerjen)
+  ));
+  satir.append(ad, etiketler, eleman('span', 'detay-yemek__kalori', `${yemek.kalori} kcal`));
   return satir;
+}
+
+function alerjenMetni(adlar) {
+  const parcalar = [eleman('strong', '', 'Alerjen uyarısı:'), ' Bu menüde seçtiğin '];
+  adlar.forEach((ad, sira) => {
+    if (sira > 0) parcalar.push(sira === adlar.length - 1 ? ' ve ' : ', ');
+    parcalar.push(eleman('strong', '', ad));
+  });
+  parcalar.push(adlar.length > 1 ? ' var. İşaretli yemeklere dikkat et.' : ' var. İşaretli yemeğe dikkat et.');
+  return parcalar;
 }
 
 function yorumKutusu(yorum) {
@@ -117,9 +155,12 @@ export function menuDetayiOlustur() {
   const bul = (secici) => pencere.querySelector(secici);
   const yaz = (secici, metin) => { bul(secici).textContent = metin; };
   const dugme = bul('[data-detay-dugme]');
+  const porsiyonDugmeleri = [...pencere.querySelectorAll('[data-porsiyon]')];
 
   let istekNo = 0;
   let dugmeyeTiklaninca = null;
+  let gosterilen = { menu: null, secenekler: {} };
+  let porsiyon = 'tam';
   let degerlendirme = null;
   let seciliPuan = 0;
 
@@ -150,6 +191,36 @@ export function menuDetayiOlustur() {
   function bosYeriGoster(bosYer) {
     bul('[data-detay-bos-yer-kutusu]').hidden = bosYer === undefined || bosYer === null;
     yaz('[data-detay-bos-yer]', bosYer ?? '');
+  }
+
+  function alerjenUyarisiGoster(adlar) {
+    bul('[data-detay-alerjen]').hidden = adlar.length === 0;
+    bul('[data-detay-alerjen-metin]').replaceChildren(...alerjenMetni(adlar));
+  }
+
+  function fiyatiGoster() {
+    const { menu, secenekler } = gosterilen;
+    if (secenekler.fiyatMetni) {
+      yaz('[data-detay-fiyat]', secenekler.fiyatMetni);
+      yaz('[data-detay-porsiyon-adi]', '');
+      return;
+    }
+
+    const yarim = porsiyon === 'yarim';
+    yaz('[data-detay-fiyat]', paraBicimle(secenekler.fiyat ?? (yarim ? menu.yarim_fiyat : menu.fiyat)));
+    yaz('[data-detay-porsiyon-adi]', menu.yarim_porsiyon || yarim ? PORSIYON_ADLARI[porsiyon] : '');
+    porsiyonDugmeleri.forEach((secenek) => {
+      secenek.setAttribute('aria-pressed', String(secenek.dataset.porsiyon === porsiyon));
+    });
+  }
+
+  function porsiyonuGoster({ secilebilir = false, secili = 'tam' } = {}) {
+    const { menu } = gosterilen;
+    porsiyon = secili;
+    bul('[data-detay-porsiyon-secimi]').hidden = !(secilebilir && menu.yarim_porsiyon);
+    yaz('[data-porsiyon-fiyat="tam"]', paraBicimle(menu.fiyat));
+    yaz('[data-porsiyon-fiyat="yarim"]', menu.yarim_fiyat === null ? '' : paraBicimle(menu.yarim_fiyat));
+    fiyatiGoster();
   }
 
   function yorumlariGoster(yorumlar, servisEdildi) {
@@ -231,6 +302,7 @@ export function menuDetayiOlustur() {
   function doldur(secenekler, menu, yorumlar) {
     yaz('[data-detay-tarih]', baslikBicimi.format(tarihOku(secenekler.tarih)));
     yaz('[data-detay-alt]', `${menu.ogun} · ${menu.yemekhane}`);
+    alerjenUyarisiGoster(menu.alerjen_uyarisi ?? []);
     bul('[data-detay-yemekler]').replaceChildren(...menu.yemekler.map(yemekSatiri));
 
     yaz('[data-detay-kalori]', `${sayiBicimi.format(menu.toplam_kalori)} kcal`);
@@ -241,7 +313,8 @@ export function menuDetayiOlustur() {
     yaz('[data-detay-son]', menu.rezervasyon_son);
     bosYeriGoster(secenekler.bosYer);
 
-    yaz('[data-detay-fiyat]', secenekler.fiyatMetni ?? paraBicimle(secenekler.fiyat ?? menu.fiyat));
+    gosterilen = { menu, secenekler };
+    porsiyonuGoster(secenekler.porsiyon);
     puaniYaz(bul('[data-detay-puan]'), secenekler.puan, true);
     eylemiGoster(secenekler.eylem);
     yorumlariGoster(yorumlar, secenekler.tarih < secenekler.bugun);
@@ -273,6 +346,12 @@ export function menuDetayiOlustur() {
     pencere.close();
   }
 
+  porsiyonDugmeleri.forEach((secenek) => {
+    secenek.addEventListener('click', () => {
+      porsiyon = secenek.dataset.porsiyon;
+      fiyatiGoster();
+    });
+  });
   dgr.acDugmesi.addEventListener('click', degerlendirmeFormunuAc);
   bul('[data-degerlendirme-vazgec]').addEventListener('click', degerlendirmeOzetiGoster);
   dgr.form.addEventListener('submit', degerlendirmeyiGonder);
@@ -298,5 +377,12 @@ export function menuDetayiOlustur() {
     if (disarida) kapat();
   });
 
-  return { ac, kapat, eylemiGoster, bosYeriGoster };
+  return {
+    ac,
+    kapat,
+    eylemiGoster,
+    bosYeriGoster,
+    porsiyonuGoster,
+    seciliPorsiyon: () => porsiyon,
+  };
 }

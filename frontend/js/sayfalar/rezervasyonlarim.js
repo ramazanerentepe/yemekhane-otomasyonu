@@ -108,6 +108,7 @@ function rezervasyonSatiri(rezervasyon) {
   satir.querySelector('[data-meta]').textContent =
     `${rezervasyon.yemekhane} · ${rezervasyon.servis_baslangic}–${rezervasyon.servis_bitis}`;
   satir.querySelector('[data-ucret]').textContent = paraBicimle(rezervasyon.ucret);
+  satir.querySelector('[data-porsiyon]').hidden = rezervasyon.porsiyon !== 'yarim';
   satir.querySelector('[data-not]').textContent = not;
 
   satir.querySelector('[data-ac]').addEventListener('click', () => detayiAc(rezervasyon));
@@ -157,6 +158,7 @@ async function detayiAc(rezervasyon) {
       ogunId: rezervasyon.ogun_id,
       menuId: rezervasyon.menu_id,
       fiyat: rezervasyon.ucret,
+      porsiyon: { secilebilir: false, secili: rezervasyon.porsiyon },
       puan: rezervasyon,
       eylem: detayEylemi(rezervasyon),
       dugmeyeTiklaninca: () => onayiAc(rezervasyon),
@@ -184,8 +186,9 @@ async function degerlendirmeKaydet(rezervasyon, { puan, yorum }) {
 function onayiAc(rezervasyon) {
   durum.secili = rezervasyon;
   const tarih = bicim.uzun.format(tarihOku(rezervasyon.tarih));
+  const porsiyon = rezervasyon.porsiyon === 'yarim' ? ' yarım porsiyon' : '';
   ogeler.onayMetin.textContent =
-    `${tarih} · ${rezervasyon.ogun} (${rezervasyon.yemekhane}) rezervasyonun iptal edilecek ` +
+    `${tarih} · ${rezervasyon.ogun} (${rezervasyon.yemekhane})${porsiyon} rezervasyonun iptal edilecek ` +
     `ve ${paraBicimle(rezervasyon.ucret)} bakiyene iade edilecek.`;
   ogeler.onayIptal.disabled = false;
   ogeler.onayIptal.textContent = 'İptal et';
