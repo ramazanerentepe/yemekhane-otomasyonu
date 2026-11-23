@@ -1,3 +1,7 @@
+> **Kurulum ve kullanım:** Bu depo, aşağıdaki başlangıç paketinin üzerine yazılmış uygulamayı
+> içerir. Kurulum adımları, test hesapları ve aşama etiketleri için
+> **[KURULUM.md](KURULUM.md)** dosyasına bakın. Aşağıdaki metin başlangıç paketinin özgün README'sidir.
+
 # Yemekhane Otomasyonu · Başlangıç Paketi
 
 Web Teknolojileri dönem ödevinin hazır altyapısı. Veritabanı şeması, örnek veri, kaynak-replika
