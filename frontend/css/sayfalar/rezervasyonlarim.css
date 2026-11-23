@@ -104,6 +104,7 @@
 
   .rezervasyon__sag { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
   .rezervasyon__ucret { color: var(--ana); font-size: 1.0625rem; font-weight: var(--kalinlik-orta); white-space: nowrap; }
+  .rezervasyon__porsiyon { padding: 2px 8px; font-size: 0.6875rem; white-space: nowrap; }
   .rezervasyon__not { color: var(--metin-silik); font-size: 0.6875rem; text-align: right; }
   .rezervasyon__not:empty { display: none; }
   .rezervasyon__iptal { position: relative; z-index: 1; min-height: 34px; padding: 0.375rem 0.875rem; font-size: var(--boyut-kucuk); }

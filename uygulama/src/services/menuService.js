@@ -1,11 +1,21 @@
 const menuRepository = require('../repositories/menuRepository');
 const menuOnbellegiRepository = require('../repositories/menuOnbellegiRepository');
+const profilRepository = require('../repositories/profilRepository');
 const istekHatasi = require('../utils/istekHatasi');
 
 const roleGoreFiyat = (menu, rol) =>
   rol === 'ogrenci' ? menu.ogrenci_fiyati : menu.personel_fiyati;
 
-function yemegiDonustur(satir) {
+const roleGoreYarimFiyat = (menu, rol) => {
+  if (menu.yarim_porsiyon !== 1) return null;
+  return rol === 'ogrenci' ? menu.ogrenci_yarim_fiyati : menu.personel_yarim_fiyati;
+};
+
+function yemegiDonustur(satir, kullaniciAlerjenleri) {
+  const alerjenIdleri = satir.alerjen_idler ? satir.alerjen_idler.split(',').map(Number) : [];
+  const uyarilar = alerjenIdleri
+    .filter((id) => kullaniciAlerjenleri.has(id))
+    .map((id) => kullaniciAlerjenleri.get(id));
   return {
     id: satir.yemek_id,
     ad: satir.yemek,
@@ -13,6 +23,7 @@ function yemegiDonustur(satir) {
     kalori: satir.kalori,
     vejetaryen: satir.vejetaryen === 1,
     alerjenler: satir.alerjenler ? satir.alerjenler.split(', ') : [],
+    uyari_alerjenleri: uyarilar,
   };
 }
 
@@ -31,11 +42,15 @@ async function haftalikMenu(yemekhaneId, ogunId, tarih, { kullaniciId, rol }) {
       id: menu.menu_id,
       tarih: menu.tarih,
       fiyat: roleGoreFiyat(menu, rol),
+      yarim_porsiyon: menu.yarim_porsiyon === 1,
+      yarim_fiyat: roleGoreYarimFiyat(menu, rol),
       bos_yer: menu.bos_yer,
       rezervasyon_acik: menu.rezervasyon_acik === 1,
       rezerve_edildi: menu.rezervasyon_id !== null,
       rezervasyon_id: menu.rezervasyon_id,
       rezervasyon_durumu: menu.rezervasyon_durumu,
+      rezervasyon_porsiyonu: menu.rezervasyon_porsiyonu,
+      alerjen_uyarisi: menu.alerjen_uyarisi === 1,
       degerlendirme: menu.benim_puanim === null
         ? null
         : { puan: menu.benim_puanim, yorum: menu.benim_yorumum },
@@ -83,14 +98,19 @@ async function menuSatirlari(yemekhaneId, tarih, ogunId) {
   return satirlar;
 }
 
-async function gununMenusu(yemekhaneId, tarih, ogunId, rol) {
-  const satirlar = await menuSatirlari(yemekhaneId, tarih, ogunId);
+async function gununMenusu(yemekhaneId, tarih, ogunId, { kullaniciId, rol }) {
+  const [satirlar, alerjenler] = await Promise.all([
+    menuSatirlari(yemekhaneId, tarih, ogunId),
+    profilRepository.kullanicininAlerjenleri(kullaniciId),
+  ]);
   if (satirlar.length === 0) {
     throw istekHatasi(404, 'Bu gün ve öğün için menü bulunmuyor.');
   }
 
   const menu = satirlar[0];
-  const yemekler = satirlar.map(yemegiDonustur);
+  const kullaniciAlerjenleri = new Map(alerjenler.map((alerjen) => [alerjen.id, alerjen.ad]));
+  const yemekler = satirlar.map((satir) => yemegiDonustur(satir, kullaniciAlerjenleri));
+  const uyarilar = [...new Set(yemekler.flatMap((yemek) => yemek.uyari_alerjenleri))];
 
   return {
     id: menu.menu_id,
@@ -98,11 +118,14 @@ async function gununMenusu(yemekhaneId, tarih, ogunId, rol) {
     yemekhane: menu.yemekhane,
     ogun: menu.ogun,
     fiyat: roleGoreFiyat(menu, rol),
+    yarim_porsiyon: menu.yarim_porsiyon === 1,
+    yarim_fiyat: roleGoreYarimFiyat(menu, rol),
     servis_baslangic: menu.servis_baslangic,
     servis_bitis: menu.servis_bitis,
     rezervasyon_son: menu.rezervasyon_son,
     toplam_kalori: yemekler.reduce((toplam, yemek) => toplam + yemek.kalori, 0),
     vejetaryen: yemekler.every((yemek) => yemek.vejetaryen),
+    alerjen_uyarisi: uyarilar,
     yemekler,
   };
 }

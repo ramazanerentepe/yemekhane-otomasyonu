@@ -996,4 +996,294 @@ container'ı yeniden başladığında korunmaktadır.
 
 ---
 
-<!-- Aşama 4 bölümü aşama tamamlandığında eklenecektir. -->
+## Aşama 4: Değişiklik Talebi
+
+### 4.1 Amaç
+
+Yemekhane Müdürlüğü sistem çalışırken iki yeni özellik istemiştir:
+
+- **Yarım porsiyon:** öğle ve akşam menülerinde yarım porsiyon seçilebilir, ücret tam fiyatın
+  %60'ıdır. Kahvaltıda yarım porsiyon yoktur. Geçmiş rezervasyonlar tam porsiyon sayılır.
+- **Alerjen uyarısı:** kullanıcı profilinde alerjenlerini seçer; menüde bu alerjenleri içeren
+  yemekler uyarıyla gösterilir.
+
+Değişiklik tek bir migration dosyasıyla çalışan veritabanına uygulanmış, replikaya geçtiği
+replikadan alınan çıktılarla gösterilmiş, ardından API ve arayüz güncellenmiştir. Aşama 3'te
+Redis'e yazılmış eski yapıdaki menü kayıtları da temizlenmiştir.
+
+| Rol      | Öğle / Akşam (tam) | Yarım porsiyon (%60) | Kahvaltı          |
+| -------- | ------------------ | -------------------- | ----------------- |
+| Öğrenci  | 40,00 TL           | 24,00 TL             | 25,00 TL, yarım yok |
+| Personel | 90,00 TL           | 54,00 TL             | yarım yok         |
+
+### 4.2 Migration Dosyası: `04_degisiklik.sql`
+
+Değişikliğin tamamı `db/init/04_degisiklik.sql` dosyasındadır. Dosya mevcut veriyi bozmayacak
+şekilde yazılmıştır:
+
+```sql
+ALTER TABLE ogunler
+    ADD COLUMN yarim_porsiyon TINYINT(1) NOT NULL DEFAULT 1 AFTER servis_bitis;
+UPDATE ogunler SET yarim_porsiyon = 0 WHERE ad = 'Kahvaltı';
+
+ALTER TABLE rezervasyonlar
+    ADD COLUMN porsiyon ENUM('tam','yarim') NOT NULL DEFAULT 'tam' AFTER durum;
+
+CREATE TABLE kullanici_alerjenleri (
+    kullanici_id  INT UNSIGNED NOT NULL,
+    alerjen_id    TINYINT UNSIGNED NOT NULL,
+    PRIMARY KEY (kullanici_id, alerjen_id),
+    CONSTRAINT fk_ka_kullanici FOREIGN KEY (kullanici_id) REFERENCES kullanicilar (id) ON DELETE CASCADE,
+    CONSTRAINT fk_ka_alerjen   FOREIGN KEY (alerjen_id)   REFERENCES alerjenler (id)
+) ENGINE=InnoDB;
+
+CREATE FUNCTION fn_porsiyon_ucreti(p_fiyat DECIMAL(8,2), p_porsiyon VARCHAR(5))
+RETURNS DECIMAL(8,2) DETERMINISTIC NO SQL
+RETURN IF(p_porsiyon = 'yarim', ROUND(p_fiyat * 0.60, 2), p_fiyat);
+```
+
+- **Hangi öğünde yarım porsiyon olduğu** veritabanında tutulur (`ogunler.yarim_porsiyon`).
+  Kural kodda "kahvaltı değilse" diye yazılmamıştır; ileride bir öğün değişirse yalnızca bu
+  değer güncellenir.
+- **Geçmiş rezervasyonlar:** `porsiyon` sütunu `NOT NULL DEFAULT 'tam'` ile eklendiği için
+  tablodaki tüm eski kayıtlar sütun eklendiği anda `tam` değerini alır. Ayrıca bir `UPDATE`
+  gerekmez.
+- **%60 kuralı** tek bir yerde, `fn_porsiyon_ucreti` fonksiyonundadır. Hem rezervasyon yordamı
+  hem de menü sorguları yarım fiyatı bu fonksiyonla hesaplar.
+- **`sp_rezervasyon_yap`** yeniden yazılmıştır. Üçüncü parametre olarak `p_porsiyon` alır;
+  geçersiz değeri ve kahvaltıda yarım porsiyonu `SQLSTATE 45000` ile reddeder, ücreti
+  fonksiyonla hesaplar, rezervasyona porsiyonu yazar ve bakiye hareketinin açıklamasına
+  "Rezervasyon (yarım porsiyon)" ekler:
+
+```sql
+IF p_porsiyon = 'yarim' AND v_yarim_var = 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Kahvaltıda yarım porsiyon yoktur.';
+END IF;
+...
+SET v_ucret = fn_porsiyon_ucreti(IF(v_rol = 'ogrenci', v_ogr_fiyat, v_per_fiyat), p_porsiyon);
+```
+
+Dosya `db/init` klasöründe olduğu için sıfırdan kurulumda (`docker compose up -d`) `01` ve
+`02`'den sonra kendiliğinden çalışır. Çalışan sistemde ise kaynak sunucuya elle uygulanmıştır.
+
+#### Adım 1: Göçten Önce Redis'teki Menü Kayıtları
+
+```powershell
+docker compose exec redis redis-cli KEYS "menu:*"
+docker compose exec redis redis-cli --raw GET menu:1:2026-11-24:2
+```
+
+![Şekil 4.1](asama-4/01_eski_onbellek_kayitlari.png)
+
+> **Şekil 4.1:** Göçten önce Redis'te Aşama 3 kodunun yazdığı üç menü anahtarı vardır. Kayıtta
+> yarım porsiyon bilgisi, yarım fiyatlar ve yemeklerin alerjen numaraları bulunmamaktadır. Bu
+> kayıtlar Adım 6'da temizlenmiştir.
+
+#### Adım 2: Göçün Kaynak Sunucuya Uygulanması
+
+```powershell
+docker compose exec mysql-primary sh -c "mysql -uroot -pyemekhane_kok yemekhane < /docker-entrypoint-initdb.d/04_degisiklik.sql"
+```
+
+![Şekil 4.2](asama-4/02_goc_kaynaga_uygulandi.png)
+
+> **Şekil 4.2:** Migration dosyası yalnızca kaynak sunucuya (`mysql-primary`) uygulanmıştır.
+> Komut hata vermeden tamamlanmıştır; görünen uyarı, parolanın komut satırında verilmesiyle
+> ilgilidir. Replikaya ayrıca bir şey uygulanmamıştır.
+
+### 4.3 Değişikliğin Replikaya Geçmesi
+
+Göç yalnızca kaynakta çalıştırıldığı hâlde aşağıdaki çıktıların tamamı **replikadan**
+alınmıştır. Tablo değişiklikleri, yeni tablo, fonksiyon ve yordam binlog üzerinden replikaya
+aktarılmıştır.
+
+#### Adım 3: Replikada Tablo Yapıları
+
+```powershell
+docker compose exec mysql-replica mysql -uroot -pyemekhane_kok yemekhane -e "SHOW CREATE TABLE rezervasyonlar\G"
+docker compose exec mysql-replica mysql -uroot -pyemekhane_kok yemekhane -e "SHOW CREATE TABLE kullanici_alerjenleri\G"
+```
+
+![Şekil 4.3](asama-4/03_replika_rezervasyonlar_tablosu.png)
+
+> **Şekil 4.3:** Replikadaki `rezervasyonlar` tablosunda yeni `porsiyon enum('tam','yarim')`
+> sütunu `NOT NULL DEFAULT 'tam'` olarak görünmektedir.
+
+![Şekil 4.4](asama-4/04_replika_kullanici_alerjenleri.png)
+
+> **Şekil 4.4:** Yeni `kullanici_alerjenleri` tablosu replikada da oluşmuştur: birleşik birincil
+> anahtar (`kullanici_id`, `alerjen_id`) ve iki yabancı anahtar. Kullanıcı silinirse
+> seçimleri de silinir (`ON DELETE CASCADE`).
+
+#### Adım 4: Öğünler, Eski Rezervasyonlar ve Yordamlar
+
+```powershell
+docker compose exec mysql-replica mysql --default-character-set=utf8mb4 -uroot -pyemekhane_kok yemekhane -e "SELECT id, ad, yarim_porsiyon FROM ogunler; SELECT porsiyon, COUNT(*) FROM rezervasyonlar GROUP BY porsiyon; SELECT ROUTINE_NAME, ROUTINE_TYPE, LAST_ALTERED FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA='yemekhane';"
+```
+
+![Şekil 4.5](asama-4/05_replika_ogunler_ve_yordamlar.png)
+
+> **Şekil 4.5:** Kahvaltıda `yarim_porsiyon = 0`, öğle ve akşamda 1'dir. Göçten önceki 367
+> rezervasyonun tamamı `tam` sayılmıştır. `fn_porsiyon_ucreti` ve `sp_rezervasyon_yap`
+> göçün çalıştığı saatte (14:15:02) değişmiş, göçün dokunmadığı diğer yordamlar ilk kurulum
+> saatinde (14:09) kalmıştır.
+
+### 4.4 Redis'teki Eski Menü Kayıtlarının Temizlenmesi
+
+Aşama 3'te önbelleğe alınan menü kayıtları yeni alanları içermez. Süreleri dolana kadar
+okunsalardı arayüz o menülerde porsiyon seçimini ve alerjen uyarısını gösteremezdi. Bu yüzden
+göçten sonra tüm `menu:*` anahtarları silinmiş, menüler bir sonraki istekte yeni yapıyla
+önbelleğe yazılmıştır. Oturum anahtarlarına dokunulmamıştır; kullanıcılar oturumdan
+düşmemiştir.
+
+#### Adım 5: Eski Kayıtların Silinmesi
+
+```powershell
+docker compose exec redis redis-cli KEYS "menu:*"
+docker compose exec redis sh -c "redis-cli --scan --pattern 'menu:*' | xargs -r redis-cli DEL"
+docker compose exec redis redis-cli KEYS "menu:*"
+```
+
+![Şekil 4.6](asama-4/06_eski_onbellek_temizlendi.png)
+
+> **Şekil 4.6:** Temizlik anında Redis'te beş menü anahtarı vardır. Silme komutu `(integer) 5`
+> döndürmüş, ardından yapılan listeleme boş sonuç (`(empty array)`) vermiştir.
+
+#### Adım 6: Yeni Yapıdaki Menü Kaydı
+
+Uygulama yeniden derlenip (`docker compose up -d --build uygulama`) menü penceresi açıldıktan
+sonra Redis'e yazılan kayıt:
+
+```powershell
+docker compose exec redis redis-cli --raw GET menu:1:2026-11-24:2
+```
+
+![Şekil 4.7](asama-4/07_yeni_yapida_onbellek_kaydi.png)
+
+> **Şekil 4.7:** Yeni kayıtta `"yarim_porsiyon":1`, `"ogrenci_yarim_fiyati":24`,
+> `"personel_yarim_fiyati":54` ve her yemeğin alerjen numaraları (`"alerjen_idler"`)
+> bulunmaktadır. Kullanıcıya özel uyarı bu numaralarla hesaplandığı için menü kaydı
+> herkes için ortak kalmaya devam eder.
+
+### 4.5 API Değişiklikleri
+
+Değişiklikler Aşama 2'deki katman düzenine göre yapılmıştır. Yeni profil özelliği için dört
+dosya eklenmiş, mevcut menü ve rezervasyon dosyaları güncellenmiştir:
+
+```
+uygulama/src/
+├── routes/profilRoutes.js            # GET /profil, PUT /profil/alerjenler
+├── controllers/profilController.js   # gövde doğrulama
+├── services/profilService.js         # profil ve kayıt iş akışı
+└── repositories/profilRepository.js  # alerjen sorguları, kayıt transaction'ı
+```
+
+| İstek                          | Değişiklik |
+| ------------------------------ | ---------- |
+| `POST /api/rezervasyonlar`     | Gövdeye `porsiyon` eklendi (`"tam"` ya da `"yarim"`, gönderilmezse `"tam"`). Geçersiz değer 400 döner; kahvaltıda yarım denenirse yordamın mesajı aynen iletilir. |
+| `GET /api/menuler/hafta`       | Her menüde `yarim_porsiyon`, `yarim_fiyat`, `rezervasyon_porsiyonu` ve `alerjen_uyarisi` (kartta rozet için). |
+| `GET /api/menu`                | `yarim_porsiyon`, `yarim_fiyat`, eşleşen alerjen adları ve her yemek için `uyari_alerjenleri`. |
+| `GET /api/rezervasyonlar`      | Her rezervasyonda `porsiyon`. |
+| `GET /api/profil`              | Kullanıcı bilgileri ve 14 alerjen, seçili olanlar işaretli. |
+| `PUT /api/profil/alerjenler`   | Gövde `{ "alerjen_idler": [...] }`. Eski seçimler silinip yenileri tek bir transaction içinde yazılır. |
+
+- **Yarım fiyat** uygulama kodunda hesaplanmaz; menü sorgusu `fn_porsiyon_ucreti` fonksiyonunu
+  çağırır. Böylece arayüzde görünen fiyat ile yordamın bakiyeden düştüğü tutar aynı kaynaktan
+  gelir.
+- **Kişiye özel uyarı ve önbellek:** Günün menüsü Redis'ten okunsa bile, kullanıcının
+  alerjenleri ayrı olarak okunup önbellekteki `alerjen_idler` ile karşılaştırılır.
+- **Okuma / yazma ayrımı:** Listeleme ve menü sorguları replikaya gider. Alerjenler
+  kaydedildikten hemen sonra dönen liste ise replikasyon gecikmesi nedeniyle Aşama 2'deki
+  bakiye kuralında olduğu gibi kaynaktan okunur.
+
+### 4.6 Arayüz: Alerjen Uyarısı
+
+Profil sayfası (`profil.html`) yeni eklenmiştir. Sayfaya üst menüdeki **Profil** bağlantısından
+ve sağ üstteki baş harflerden gidilir; telefonda baş harfler bu işi görür.
+
+![Şekil 4.8](asama-4/yakin/08_profil_alerjen_secimi_yakin.png)
+
+> **Şekil 4.8:** Profil sayfasında 14 alerjen seçilebilir. Öğrenci hesabıyla **Sert kabuklu
+> yemişler** ve **Soya** seçilip kaydedilmiş, _"Alerjenlerin kaydedildi."_ mesajı alınmıştır.
+> Değişiklik yokken Kaydet düğmesi pasiftir.
+
+![Şekil 4.9](asama-4/09_haftalik_menu_alerjen_rozeti.png)
+
+> **Şekil 4.9:** Haftalık menüde (Merkez Yemekhane, öğle) seçilen alerjenleri içeren 25, 26, 27
+> ve 28 Kasım kartlarında kırmızı **Alerjen** rozeti vardır; 23, 24 ve 29 Kasım menülerinde bu
+> alerjenler olmadığı için rozet çıkmamıştır.
+
+![Şekil 4.10](asama-4/yakin/10_detayda_alerjen_uyarisi_yakin.png)
+
+> **Şekil 4.10:** Menü penceresinin üstünde, menüde hangi alerjenlerin bulunduğunu yazan uyarı
+> kutusu vardır. Bu alerjenleri içeren yemeklerin adı kırmızı ve uyarı simgelidir, eşleşen
+> alerjen rozeti kırmızı gösterilir; kullanıcının seçmediği alerjenler turuncu kalır.
+
+### 4.7 Arayüz: Yarım Porsiyon
+
+Porsiyon seçimi menü penceresindedir ve iki seçenekte de fiyat yazar. Rezervasyon Merkez
+Yemekhane, 25 Kasım akşam menüsünde yapılmıştır.
+
+![Şekil 4.11](asama-4/yakin/11_yarim_porsiyon_secimi_yakin.png)
+
+> **Şekil 4.11:** **Yarım** seçildiğinde fiyat 24,00 TL'ye iner ve altında "Yarım porsiyon"
+> yazar. Rezervasyon öncesi bakiye 355,00 TL'dir.
+
+![Şekil 4.12](asama-4/yakin/12_yarim_porsiyon_rezervasyonu_yakin.png)
+
+> **Şekil 4.12:** Rezervasyondan sonra _"Rezervasyon oluşturuldu. Yeni bakiye: 331,00 TL"_
+> mesajı alınmıştır (355 - 24 = 331). Rezerve edilmiş menüde seçim gizlenir, ödenen porsiyon
+> yazar. Gösterilen bakiye Aşama 2'deki kurala göre kaynaktan okunmuştur.
+
+![Şekil 4.13](asama-4/yakin/13_kartta_rezerve_yarim_yakin.png)
+
+> **Şekil 4.13:** Haftalık kartta rezervasyon **Rezerve · Yarım** olarak görünmektedir.
+
+![Şekil 4.14](asama-4/yakin/14_rezervasyonlarimda_yarim_porsiyon_yakin.png)
+
+> **Şekil 4.14:** Rezervasyonlarım sayfasında ödenen tutar (24,00 TL) ve **Yarım porsiyon**
+> rozeti.
+
+![Şekil 4.15](asama-4/yakin/15_yarim_porsiyon_iptal_onayi_yakin.png)
+
+> **Şekil 4.15:** İptal onayında porsiyon ve iade edilecek tutar yazar. İade tutarı
+> rezervasyonda ödenen ücrettir (24,00 TL).
+
+![Şekil 4.16](asama-4/yakin/16_kahvaltida_porsiyon_secimi_yok_yakin.png)
+
+> **Şekil 4.16:** Kahvaltı penceresinde porsiyon seçimi gösterilmez, yalnızca tam fiyat
+> (25,00 TL) vardır. API'ye doğrudan yarım porsiyon isteği gönderilse bile yordam
+> _"Kahvaltıda yarım porsiyon yoktur."_ mesajıyla reddeder.
+
+#### Adım 7: Yarım Porsiyonun Veritabanındaki Kaydı
+
+```powershell
+docker compose exec mysql-replica mysql -uroot -pyemekhane_kok yemekhane --default-character-set=utf8mb4 -e "SELECT r.id, m.tarih, y.ad AS yemekhane, o.ad AS ogun, r.porsiyon, r.ucret, r.durum FROM rezervasyonlar r JOIN menuler m ON m.id = r.menu_id JOIN yemekhaneler y ON y.id = m.yemekhane_id JOIN ogunler o ON o.id = m.ogun_id JOIN kullanicilar k ON k.id = r.kullanici_id WHERE k.eposta = 'mehmet.yildiz@ogr.kampus.edu.tr' AND m.tarih = '2026-11-25' AND m.yemekhane_id = 1; SELECT tur, tutar, aciklama, olusturma FROM bakiye_hareketleri WHERE kullanici_id = (SELECT id FROM kullanicilar WHERE eposta = 'mehmet.yildiz@ogr.kampus.edu.tr') ORDER BY id DESC LIMIT 4; SELECT a.ad AS alerjen FROM kullanici_alerjenleri ka JOIN alerjenler a ON a.id = ka.alerjen_id JOIN kullanicilar k ON k.id = ka.kullanici_id WHERE k.eposta = 'mehmet.yildiz@ogr.kampus.edu.tr';"
+```
+
+![Şekil 4.17](asama-4/17_replikada_porsiyon_kaniti.png)
+
+> **Şekil 4.17:** Replikadan alınan çıktıda 372 numaralı rezervasyon `yarim`, 24.00 TL ve
+> `aktif` durumdadır; 371 numaralı öğle denemesi iptal edilmiştir. Bakiye hareketlerinde
+> -24.00 TL "Rezervasyon (yarım porsiyon)" ve iptalde +24.00 TL iade görülmektedir. Son
+> tabloda kullanıcının profilde seçtiği iki alerjen yer alır.
+
+### 4.8 Telefon Görünümü
+
+![Şekil 4.18](asama-4/yakin/telefon_1_menu_porsiyon_profil.png)
+
+> **Şekil 4.18:** Telefonda (393x852): (a) haftalık menüde rozetler kartın alt satırındadır,
+> alerjen rozeti yalnızca simge olarak görünür; (b) menü penceresinde alerjen uyarısı ve yarım
+> porsiyon seçimi; (c) profil sayfası.
+
+### 4.9 Sonuç
+
+Değişiklik talebi tek bir migration dosyasıyla çalışan sisteme uygulanmıştır. Dosya mevcut
+veriyi bozmamış, eski 367 rezervasyon varsayılan değerle tam porsiyon olmuştur. Göç yalnızca
+kaynakta çalıştırılmış, yeni sütunlar, tablo, fonksiyon ve yordam replikaya kendiliğinden
+geçmiştir. %60 kuralı veritabanında tek bir fonksiyonda tutulmakta; para hareketi Aşama 2'de
+olduğu gibi yalnızca yordamla yapılmaktadır. Redis'teki eski yapıdaki menü kayıtları silinmiş,
+menüler yeni yapıyla önbelleğe yazılmıştır. Arayüzde menü penceresine porsiyon seçimi, haftalık
+kartlara ve menü penceresine alerjen uyarısı, yeni profil sayfasına alerjen seçimi eklenmiştir.
+Depo sıfırdan klonlanıp `docker compose up -d` ile kurulduğunda göç kendiliğinden
+uygulanmakta ve sistem ek adım gerektirmeden çalışmaktadır.

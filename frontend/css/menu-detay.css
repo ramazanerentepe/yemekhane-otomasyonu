@@ -51,6 +51,22 @@
 
   .detay__govde { flex: 1; overflow-y: auto; padding: 10px 16px 18px; }
 
+  .detay__alerjen {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 2px 0 6px;
+    padding: 10px 12px;
+    border: 1px solid var(--ana);
+    border-left-width: 5px;
+    border-radius: var(--kose);
+    background: var(--hata-zemin);
+    color: var(--ana-koyu);
+    font-size: var(--boyut-kucuk);
+  }
+  .detay__alerjen .ikon { width: 18px; height: 18px; margin-top: 1px; color: var(--ana); }
+  .detay__alerjen p { max-width: none; margin: 0; }
+
   .detay__yemekler { margin: 0; padding: 0; list-style: none; }
 
   .detay-yemek {
@@ -63,6 +79,9 @@
   .detay-yemek__ad { flex: 1; min-width: 0; font-size: var(--boyut); }
   .detay-yemek__etiketler { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
   .detay-yemek__etiketler .rozet { padding: 2px 7px; font-size: 0.6875rem; font-weight: var(--kalinlik-normal); }
+  .detay-yemek--dikkat .detay-yemek__ad { color: var(--ana-koyu); font-weight: var(--kalinlik-orta); }
+  .detay-yemek__ad .ikon { display: inline-block; width: 1em; height: 1em; margin-right: 5px; vertical-align: -0.125em; color: var(--ana); }
+  .detay-yemek__etiketler .rozet--eslesen { background: var(--ana); color: var(--ana-uzerinde); font-weight: var(--kalinlik-orta); }
   .detay-yemek__kalori { min-width: 58px; color: var(--metin-soluk); font-size: var(--boyut-kucuk); text-align: right; }
 
   .detay__bilgiler {
@@ -83,7 +102,17 @@
     border-radius: var(--kose);
     background: var(--yuzey-gri);
   }
-  .detay__fiyat { color: var(--ana); font-size: 1.375rem; font-weight: var(--kalinlik-orta); }
+  .detay__porsiyon { display: flex; align-items: center; gap: 10px; flex-basis: 100%; }
+  .detay__porsiyon-etiket { color: var(--metin-soluk); font-size: 0.75rem; font-weight: var(--kalinlik-orta); }
+  .detay__porsiyon-secenekler { border: 1px solid var(--cizgi); background: var(--yuzey); }
+  .detay__porsiyon-secenekler .segment__secenek { color: var(--metin); }
+  .detay__porsiyon-secenekler .segment__secenek[aria-pressed="true"] { color: var(--ana-uzerinde); font-weight: var(--kalinlik-orta); }
+  .detay__porsiyon-secenekler small { font-size: 0.75rem; font-weight: var(--kalinlik-normal); opacity: 0.85; }
+
+  .detay__fiyat-kutusu { display: grid; }
+  .detay__fiyat { color: var(--ana); font-size: 1.375rem; font-weight: var(--kalinlik-orta); line-height: 1.2; }
+  .detay__porsiyon-adi { color: var(--metin-soluk); font-size: 0.75rem; }
+  .detay__porsiyon-adi:empty { display: none; }
   .detay__puan { font-size: var(--boyut-kucuk); }
   .detay__puan small { color: var(--metin-soluk); font-size: 0.75rem; }
 
@@ -175,6 +204,19 @@
       background: var(--cizgi-koyu);
     }
     .detay__dugme { width: 100%; margin-left: 0; }
+    .detay-yemek:has(.detay-yemek__etiketler > :nth-child(2)) {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        "ad       kalori"
+        "etiketler etiketler";
+      gap: 4px 8px;
+    }
+    .detay-yemek:has(.detay-yemek__etiketler > :nth-child(2)) .detay-yemek__ad { grid-area: ad; }
+    .detay-yemek:has(.detay-yemek__etiketler > :nth-child(2)) .detay-yemek__kalori { grid-area: kalori; }
+    .detay-yemek:has(.detay-yemek__etiketler > :nth-child(2)) .detay-yemek__etiketler { grid-area: etiketler; justify-content: flex-start; }
+    .detay__porsiyon-secenekler { flex: 1; }
+    .detay__porsiyon-secenekler .segment__secenek { flex: 1; padding-inline: 0.5rem; }
     .degerlendirme__eylemler { flex: 1; }
     .degerlendirme__eylemler .dugme { flex: 1; }
   }

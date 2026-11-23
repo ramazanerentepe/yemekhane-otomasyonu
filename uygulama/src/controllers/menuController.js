@@ -35,7 +35,7 @@ async function gununMenusu(req, res) {
     throw istekHatasi(400, 'Yemekhane, tarih ve öğün seçilmelidir.');
   }
 
-  res.json(await menuService.gununMenusu(yemekhaneId, tarih, ogunId, req.oturum.rol));
+  res.json(await menuService.gununMenusu(yemekhaneId, tarih, ogunId, req.oturum));
 }
 
 async function yorumlar(req, res) {

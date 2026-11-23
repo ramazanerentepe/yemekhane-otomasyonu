@@ -28,6 +28,7 @@
         <a class="ust-menu__baglanti" href="/menu.html">Menü</a>
         <a class="ust-menu__baglanti" href="/rezervasyonlarim.html" aria-current="page">Rezervasyonlarım</a>
         <a class="ust-menu__baglanti" href="/bakiye.html">Bakiye</a>
+        <a class="ust-menu__baglanti ust-menu__baglanti--profil" href="/profil.html">Profil</a>
         <a class="ust-menu__baglanti" href="/yonetici.html" data-yonetici hidden>Yönetici</a>
       </nav>
 
@@ -36,7 +37,7 @@
           <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cuzdan"></use></svg>
           <span data-bakiye>—</span>
         </span>
-        <span class="avatar" data-avatar aria-hidden="true"></span>
+        <a class="avatar" href="/profil.html" data-avatar aria-label="Profil"></a>
         <button type="button" class="dugme dugme--simge" data-cikis aria-label="Çıkış yap">
           <svg class="ikon" aria-hidden="true"><use href="/img/ikonlar.svg#cikis"></use></svg>
         </button>
@@ -100,6 +101,7 @@
       </div>
       <div class="rezervasyon__sag">
         <strong class="rezervasyon__ucret" data-ucret></strong>
+        <span class="rozet rezervasyon__porsiyon" data-porsiyon hidden>Yarım porsiyon</span>
         <span class="rezervasyon__not" data-not></span>
         <button type="button" class="dugme dugme--ikincil rezervasyon__iptal" data-iptal hidden>İptal et</button>
       </div>

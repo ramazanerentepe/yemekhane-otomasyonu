@@ -2,7 +2,7 @@ const { okumaHavuzu, yazmaHavuzu } = require('../config/db');
 
 async function kullanicininRezervasyonlari(kullaniciId) {
   const [satirlar] = await okumaHavuzu.query(
-    `SELECT r.id, r.durum, r.ucret, m.id AS menu_id, m.tarih,
+    `SELECT r.id, r.durum, r.porsiyon, r.ucret, m.id AS menu_id, m.tarih,
             m.yemekhane_id, m.ogun_id, o.ad AS ogun, yh.ad AS yemekhane,
             p.ortalama_puan, p.oy_sayisi,
             d.puan AS benim_puanim, d.yorum AS benim_yorumum,
@@ -30,8 +30,8 @@ async function kullanicininRezervasyonlari(kullaniciId) {
   return satirlar;
 }
 
-async function rezervasyonYap(kullaniciId, menuId) {
-  const [sonuclar] = await yazmaHavuzu.query('CALL sp_rezervasyon_yap(?, ?)', [kullaniciId, menuId]);
+async function rezervasyonYap(kullaniciId, menuId, porsiyon) {
+  const [sonuclar] = await yazmaHavuzu.query('CALL sp_rezervasyon_yap(?, ?, ?)', [kullaniciId, menuId, porsiyon]);
   return sonuclar[0][0];
 }
 
