@@ -739,4 +739,261 @@ Aşama 3'te Redis'e taşınacak ve menü verisi Redis'te önbelleğe alınacakt�
 
 ---
 
-<!-- Aşama 3 ve 4 bölümleri ilgili aşamalar tamamlandıkça eklenecektir. -->
+## Aşama 3: Redis
+
+### 3.1 Amaç
+
+Bu aşamada Redis iki iş için kullanılmıştır: günün menüsünün önbelleğe alınması ve oturum
+bilgilerinin saklanması. Menü önbelleği, aynı menünün her açılışta veritabanından tekrar
+okunmasını önler; yönetici menüyü değiştirdiğinde ilgili kayıt silinir. Oturumların Redis'e
+taşınmasıyla, Aşama 2'de uygulamanın belleğinde tutulan ve container yeniden başladığında
+kaybolan oturumlar artık yeniden başlatmadan etkilenmemektedir.
+
+### 3.2 Redis'in Kullanımı
+
+| Görev          | Anahtar                                 | Süre                                  | Ne zaman silinir                     |
+| -------------- | --------------------------------------- | ------------------------------------- | ------------------------------------ |
+| Menü önbelleği | `menu:{yemekhane_id}:{tarih}:{ogun_id}` | Menünün kendi gününün sonuna kadar    | Yönetici o menüyü değiştirdiğinde    |
+| Oturum         | `oturum:{token}`                        | 30 dakika, her istekte yenilenir      | Çıkış yapıldığında                   |
+
+Redis bağlantısı `config/redis.js` dosyasında `redis` paketiyle kurulur; adres ve port
+compose dosyasındaki `REDIS_HOST` ve `REDIS_PORT` ortam değişkenlerinden okunur. Uygulama
+açılırken önce Redis'e bağlanır, ardından istek kabul etmeye başlar. Redis'e erişen kod
+Aşama 2'deki katman düzenine uygun olarak veri katmanındadır:
+
+```
+uygulama/src/
+├── config/redis.js                       # Redis istemcisi
+├── repositories/menuOnbellegiRepository.js   # menu:* anahtarları (getir, yaz, sil)
+├── repositories/oturumRepository.js          # oturum:* anahtarları (kaydet, getir ve uzat, sil)
+├── services/menuService.js               # önce önbellek, yoksa veritabanı
+├── services/yoneticiService.js           # menü kaydedilince önbelleğin silinmesi
+└── services/oturumService.js             # oturum oluşturma, okuma, silme
+```
+
+#### Adım 1: Uygulamanın Redis'e Bağlanması
+
+```powershell
+docker compose logs uygulama
+```
+
+![Şekil 3.1](asama-3/01_uygulama_redis_baglantisi.png)
+
+> **Şekil 3.1:** Uygulama açılışında önce Redis bağlantısı kurulmuş, ardından API 8000
+> portunu dinlemeye başlamıştır. `uygulama` servisi compose dosyasında `redis` servisi
+> sağlıklı olmadan başlamaz.
+
+---
+
+### 3.3 Menü Önbelleği
+
+Günün menüsü (`GET /api/menu`), menü sayfasındaki ve Rezervasyonlarım sayfasındaki menü
+penceresinin verisidir. `menuService` önce Redis'teki anahtara bakar; kayıt varsa onu döner,
+yoksa menüyü replikadan okuyup Redis'e yazar:
+
+```js
+async function menuSatirlari(yemekhaneId, tarih, ogunId) {
+  const anahtar = menuOnbellegiRepository.anahtar(yemekhaneId, tarih, ogunId);
+  const onbellekteki = await onbellektenOku(yemekhaneId, tarih, ogunId);
+  if (onbellekteki) {
+    console.log(`[önbellek] ${anahtar} Redis'ten okundu`);
+    return onbellekteki;
+  }
+
+  const satirlar = await menuRepository.gununMenusunuGetir(yemekhaneId, tarih, ogunId);
+  if (satirlar.length > 0) {
+    const sure = await onbellegeYaz(yemekhaneId, tarih, ogunId, satirlar);
+    ...
+  }
+  return satirlar;
+}
+```
+
+- Önbellekte `v_menu_detay` view'ından gelen satırlar JSON olarak tutulur. Fiyat, kayıt
+  okunduktan sonra kullanıcının rolüne göre seçildiği için öğrenci ve personel aynı kaydı
+  kullanır.
+- Süre, menünün tarihinin gece yarısına kalan saniye olarak verilir. Bugünün menüsü bu gece,
+  yarının menüsü yarın gece silinir. Geçmiş bir günün menüsü önbelleğe yazılmaz.
+- Menüsü olmayan bir gün için boş sonuç önbelleğe yazılmaz.
+- Redis'e ulaşılamazsa hata günlüğe yazılır ve menü veritabanından okunmaya devam eder.
+
+#### Adım 2: İlk İstek Veritabanından, İkincisi Redis'ten
+
+Menü sayfasında bugünün (23 Kasım) Öğle menüsünün penceresi iki kez açılmış, ardından
+uygulama günlüğüne bakılmıştır.
+
+```powershell
+docker compose logs --tail 5 uygulama
+```
+
+![Şekil 3.2](asama-3/02_onbellek_gunlugu.png)
+
+> **Şekil 3.2:** İlk açılışta `menu:1:2026-11-23:2` anahtarı Redis'te yoktur; menü
+> veritabanından okunmuş ve 40.607 saniyelik süreyle Redis'e yazılmıştır. İkinci açılışta
+> aynı menü Redis'ten okunmuştur.
+
+#### Adım 3: Redis'teki Menü Kaydı
+
+```powershell
+docker compose exec redis redis-cli KEYS "menu:*"
+docker compose exec redis redis-cli TTL menu:1:2026-11-23:2
+docker compose exec redis redis-cli --raw GET menu:1:2026-11-23:2
+```
+
+![Şekil 3.3](asama-3/03_redis_menu_kaydi.png)
+
+> **Şekil 3.3:** Redis'teki tek menü anahtarı, kaydın gece yarısına kalan süresi (38.230
+> saniye) ve kaydın içeriği. `GET` çıktısında Öğle menüsünün beş yemeği; yemek adı, kategori,
+> kalori, vejetaryen ve alerjen bilgisiyle birlikte görülmektedir. Türkçe karakterlerin
+> okunabilmesi için `redis-cli`'ye `--raw` seçeneği verilmiştir.
+
+---
+
+### 3.4 Menü Değişince Önbelleğin Silinmesi
+
+Yönetici panelinde bir menü oluşturulduğunda ya da düzenlendiğinde, `yoneticiService`
+veritabanına yazma tamamlandıktan sonra o menünün anahtarını Redis'ten siler. Böylece bir
+sonraki istek menüyü veritabanından yeni hâliyle okur.
+
+Silme işlemi **iki saniye sonra bir kez daha** yapılır. Bölüm 2.6'da anlatıldığı gibi okumalar
+replikadan yapılır ve replikasyon eşzamansızdır. Silmeyle replikanın değişikliği uygulaması
+arasındaki kısa sürede gelen bir istek, menünün eski hâlini replikadan okuyup önbelleğe
+yeniden yazabilir; bu durumda eski menü günün sonuna kadar gösterilirdi. İkinci silme bu
+olasılığı ortadan kaldırır. Arada istek gelmemişse kayıt zaten silinmiş olur ve günlüğe
+_"önbellekte yoktu"_ yazılır.
+
+#### Adım 4: Yönetici Menüyü Günceller
+
+Menü sayfasında 24 Kasım Öğle menüsünün penceresi açılarak menü önbelleğe alınmış, ardından
+yönetici panelinde bu menüye yemek eklenip kaydedilmiştir.
+
+![Şekil 3.4](asama-3/04_yonetici_menu_guncellendi.png)
+
+![Şekil 3.5](asama-3/yakin/04_yonetici_menu_guncellendi_yakin.png)
+
+> **Şekil 3.4 ve 3.5:** Yönetici panelinde 24 Kasım Öğle menüsünün kaydedilmesi ve formun
+> yakınlaştırması: _"Menü güncellendi."_ Menüye Sütlaç ve Mevsim Meyvesi eklenmiştir.
+
+#### Adım 5: Önbellekteki Kaydın Silinmesi
+
+```powershell
+docker compose logs --tail 6 uygulama
+docker compose exec redis redis-cli EXISTS menu:1:2026-11-24:2
+```
+
+![Şekil 3.6](asama-3/05_onbellek_silindi.png)
+
+> **Şekil 3.6:** 24 Kasım menüsü ilk açılışta veritabanından okunmuş ve **123.279 saniyelik**
+> (yaklaşık 34 saat, 24 Kasım'ın sonuna kadar) süreyle önbelleğe yazılmış, sonraki açılışlar
+> Redis'ten yapılmıştır. Yönetici kaydettiğinde kayıt silinmiş (_"silindi (menü
+> kaydedildi)"_), iki saniye sonraki ikinci silmede kayıt artık bulunmamıştır. `EXISTS`
+> komutu anahtarın Redis'te olmadığını (`0`) göstermektedir.
+
+#### Adım 6: Arayüzde Yeni Menü
+
+![Şekil 3.7](asama-3/yakin/06_arayuzde_yeni_menu_yakin.png)
+
+> **Şekil 3.7:** Kayıttan sonra öğrenci hesabıyla açılan 24 Kasım Öğle penceresi. Menü
+> veritabanından yeni hâliyle okunduğu için eklenen Sütlaç listede görünmektedir. Bu görüntü,
+> Şekil 3.4'teki kayıttan önce yalnızca Sütlaç eklendiğinde alınmıştır.
+
+---
+
+### 3.5 Oturumların Redis'te Tutulması
+
+Aşama 2'de oturumlar uygulamanın belleğindeki bir `Map` nesnesinde tutuluyordu ve
+`uygulama` container'ı her yeniden başladığında bütün kullanıcıların oturumu kapanıyordu. Bu
+aşamada oturumlar `oturumRepository` üzerinden Redis'e taşınmıştır:
+
+- Girişte rastgele bir anahtar (UUID) üretilir ve `oturum:{token}` anahtarına kullanıcının
+  kimliği ve rolü 1800 saniyelik süreyle yazılır.
+- Oturum gerektiren her istekte kayıt `GETEX` komutuyla okunur; bu komut süreyi yeniden 1800
+  saniyeye ayarlar. Böylece kullanıcı işlem yaptığı sürece oturum açık kalır, 30 dakika hiçbir
+  istek gelmezse kendiliğinden silinir.
+- Çıkışta (`POST /api/cikis`) anahtar silinir.
+
+```js
+async function getirVeUzat(token) {
+  const deger = await redisIstemcisi.getEx(anahtar(token), { type: 'EX', value: OTURUM_SURESI });
+  return deger ? JSON.parse(deger) : null;
+}
+```
+
+Arayüz kodunda değişiklik gerekmemiştir; tarayıcı oturum anahtarını yine `Authorization`
+başlığıyla gönderir.
+
+#### Adım 7: Redis'teki Oturum Kaydı
+
+```powershell
+docker compose exec redis redis-cli --scan --pattern "oturum:*"
+docker compose exec redis redis-cli GET oturum:1c2048c2-61d2-41b4-9287-5e1eebbd0e63
+docker compose exec redis redis-cli TTL oturum:1c2048c2-61d2-41b4-9287-5e1eebbd0e63
+```
+
+![Şekil 3.8](asama-3/07_redis_oturum_kaydi.png)
+
+> **Şekil 3.8:** Öğrenci (Mehmet) ve yönetici (Leyla) için iki oturum anahtarı. Öğrencinin
+> kaydında kullanıcı kimliği (`7`) ve rolü (`ogrenci`) tutulmaktadır; parola ya da kişisel
+> bilgi saklanmaz. Kalan süre 1736 saniyedir.
+
+#### Adım 8: Sürenin Her İstekte Yenilenmesi
+
+Aynı `TTL` komutu öğrencinin sayfasına dokunulmadan art arda çalıştırılmış, ardından
+tarayıcıda sayfa yenilenip (F5) komut bir kez daha çalıştırılmıştır.
+
+```powershell
+docker compose exec redis redis-cli TTL oturum:1c2048c2-61d2-41b4-9287-5e1eebbd0e63
+```
+
+![Şekil 3.9](asama-3/08_oturum_suresi_yenileniyor.png)
+
+> **Şekil 3.9:** Kalan süre istek gelmediği sürece azalmaktadır (1391, 1338, 1330 saniye).
+> Sayfa yenilendiğinde tarayıcının API'ye gönderdiği istekle süre yeniden 1800 saniyeye
+> ayarlanmıştır (1797).
+
+#### Adım 9: Uygulama Yeniden Başladığında Oturumun Korunması
+
+```powershell
+docker compose restart uygulama
+docker compose ps uygulama
+```
+
+![Şekil 3.10](asama-3/09_yeniden_baslatma_terminal.png)
+
+> **Şekil 3.10:** `uygulama` container'ı yeniden başlatılmıştır; `docker compose ps` çıktısında
+> container'ın 14 saniyedir çalıştığı (`Up 14 seconds (healthy)`) görülmektedir.
+
+![Şekil 3.11](asama-3/10_yeniden_baslatma_tarayici.png)
+
+> **Şekil 3.11:** Yeniden başlatmadan sonra öğrencinin sayfası yenilendiğinde giriş ekranına
+> dönülmemiş, haftalık menü oturum açık olarak gelmiştir. Oturum bilgisi uygulamanın belleğinde
+> değil Redis'te olduğu için yeniden başlatmadan etkilenmemiştir.
+
+#### Adım 10: Çıkışta Oturumun Silinmesi
+
+Öğrenci arayüzdeki çıkış düğmesiyle oturumu kapatmış, anahtarlar çıkıştan önce ve sonra
+listelenmiştir.
+
+```powershell
+docker compose exec redis redis-cli --scan --pattern "oturum:*"
+```
+
+![Şekil 3.12](asama-3/11_cikista_oturum_silindi.png)
+
+> **Şekil 3.12:** Çıkıştan önce iki oturum anahtarı vardır. Çıkıştan sonra öğrencinin anahtarı
+> (`bde7efc7...`) silinmiş, yalnızca yöneticinin anahtarı kalmıştır. Bu görüntü Şekil 3.8'den önce
+> alınmıştır; öğrenci daha sonra yeniden giriş yaptığında yeni bir anahtar (`1c2048c2...`) üretilmiştir.
+
+### 3.6 Sonuç
+
+Redis, menü önbelleği ve oturum deposu olarak kullanılmaktadır. Günün menüsü ilk istekte
+veritabanından okunup menünün gününün sonuna kadar önbellekte tutulmakta, sonraki istekler
+Redis'ten karşılanmakta ve bu durum uygulama günlüğünde görülmektedir. Yönetici bir menüyü
+değiştirdiğinde ilgili kayıt silinmekte; replikasyon gecikmesi nedeniyle eski verinin yeniden
+önbelleğe yazılması iki saniye sonraki ikinci silmeyle önlenmektedir. Oturumlar 30 dakikalık,
+her istekte yenilenen bir süreyle Redis'te tutulmakta, çıkışta silinmekte ve uygulama
+container'ı yeniden başladığında korunmaktadır.
+
+---
+
+<!-- Aşama 4 bölümü aşama tamamlandığında eklenecektir. -->

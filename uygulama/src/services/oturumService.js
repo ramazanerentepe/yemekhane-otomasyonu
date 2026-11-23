@@ -1,19 +1,21 @@
 const crypto = require('crypto');
+const oturumRepository = require('../repositories/oturumRepository');
 
-const oturumlar = new Map();
+const TOKEN_BICIMI = /^[0-9a-f-]{36}$/;
 
 async function olustur(kullanici) {
   const token = crypto.randomUUID();
-  oturumlar.set(token, { kullaniciId: kullanici.id, rol: kullanici.rol });
+  await oturumRepository.kaydet(token, { kullaniciId: kullanici.id, rol: kullanici.rol });
   return token;
 }
 
 async function getir(token) {
-  return oturumlar.get(token) || null;
+  if (!TOKEN_BICIMI.test(token)) return null;
+  return oturumRepository.getirVeUzat(token);
 }
 
 async function sil(token) {
-  oturumlar.delete(token);
+  await oturumRepository.sil(token);
 }
 
 module.exports = { olustur, getir, sil };
